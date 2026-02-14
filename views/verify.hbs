@@ -124,6 +124,115 @@
                 font-size: 20px !important;
             }
         }
+
+        @keyframes beamPulse {
+            0% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.4;
+            }
+        }
+
+        @keyframes cornerPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+        }
+
+        .scan-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(66, 133, 244, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(66, 133, 244, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+
+        .target-bracket {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4285F4;
+            animation: cornerPulse 2s ease-in-out infinite;
+            z-index: 5;
+        }
+
+        .bracket-tl {
+            top: 15px;
+            left: 15px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .bracket-tr {
+            top: 15px;
+            right: 15px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .bracket-bl {
+            bottom: 15px;
+            left: 15px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .bracket-br {
+            bottom: 15px;
+            right: 15px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .telemetry-tag {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            font-size: 7px;
+            color: #4285F4;
+            background: rgba(10, 17, 40, 0.7);
+            padding: 2px 4px;
+            border-radius: 2px;
+            border-left: 1px solid #4285F4;
+            pointer-events: none;
+            animation: floatData 3s ease-in-out infinite;
+            white-space: nowrap;
+            z-index: 6;
+        }
+
+        .lock-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border: 1px dashed rgba(66, 133, 244, 0.3);
+            border-radius: 50%;
+            animation: rotateMesh 15s linear infinite;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -186,44 +295,67 @@
                 step.</p>
 
             <div id="scanBox"
-                style="position: relative; width: 220px; height: 220px; margin: 30px auto; border: 2px solid rgba(66,133,244,0.3); border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(66,133,244,0.1);">
+                style="position: relative; width: 220px; height: 220px; margin: 30px auto; border: 2px solid rgba(66,133,244,0.3); border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(66,133,244,0.2);">
                 <!-- Real Video (Hidden from user) -->
                 <video id="scanVideo" style="position: absolute; width: 1px; height: 1px; opacity: 0;"></video>
 
-                <!-- Biometric Avatar / AI Mesh (Shown to user) -->
+                <!-- Biometric UI Stage -->
                 <div id="avatarContainer"
                     style="display: none; width: 100%; height: 100%; position: relative; background: radial-gradient(circle at center, #0a1128 0%, #000 100%);">
+
+                    <div class="scan-grid"></div>
+                    <div class="lock-indicator"></div>
+
+                    <!-- Target Brackets -->
+                    <div class="target-bracket bracket-tl"></div>
+                    <div class="target-bracket bracket-tr"></div>
+                    <div class="target-bracket bracket-bl"></div>
+                    <div class="target-bracket bracket-br"></div>
+
                     <!-- Layered AI Mesh -->
                     <svg id="aiMesh" width="100%" height="100%" viewBox="0 0 100 100"
-                        style="position: absolute; top:0; left:0;">
+                        style="position: absolute; top:0; left:0; z-index: 4;">
                         <!-- Rotating base -->
-                        <circle cx="50" cy="50" r="45" stroke="#4285F4" stroke-width="0.1" fill="none"
-                            class="rotate-mesh" stroke-dasharray="2 4" />
-                        <!-- Pulsing avatar -->
+                        <circle cx="50" cy="50" r="45" stroke="#4285F4" stroke-width="0.05" fill="none"
+                            class="rotate-mesh" stroke-dasharray="1 3" />
+
+                        <!-- Interconnected Nodes -->
                         <g class="mesh-pulse">
+                            <!-- Main Face Map -->
                             <path
                                 d="M50 20 C35 20, 25 35, 30 55 C35 75, 45 80, 50 80 C55 80, 65 75, 70 55 C75 35, 65 20, 50 20"
-                                stroke="#4285F4" stroke-width="0.5" fill="none" />
-                            <circle cx="40" cy="45" r="2" fill="#4285F4" opacity="0.6" />
-                            <circle cx="60" cy="45" r="2" fill="#4285F4" opacity="0.6" />
-                            <path d="M40 65 Q50 70 60 65" stroke="#4285F4" stroke-width="0.3" fill="none"
-                                opacity="0.5" />
+                                stroke="#4285F4" stroke-width="0.3" fill="none" opacity="0.8" />
+
+                            <!-- Mapping Nodes -->
+                            <circle cx="40" cy="45" r="1.5" fill="#4285F4" />
+                            <circle cx="60" cy="45" r="1.5" fill="#4285F4" />
+                            <circle cx="50" cy="35" r="1" fill="#4285F4" opacity="0.5" />
+                            <circle cx="50" cy="65" r="1" fill="#4285F4" opacity="0.5" />
+                            <circle cx="35" cy="60" r="1" fill="#4285F4" opacity="0.5" />
+                            <circle cx="65" cy="60" r="1" fill="#4285F4" opacity="0.5" />
+
+                            <!-- Connection Lines -->
+                            <line x1="40" y1="45" x2="50" y2="35" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
+                            <line x1="60" y1="45" x2="50" y2="35" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
+                            <line x1="40" y1="45" x2="50" y2="65" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
+                            <line x1="60" y1="45" x2="50" y2="65" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
                         </g>
-                        <!-- Data links -->
-                        <path d="M20 50 L80 50 M50 20 L50 80" stroke="#4285F4" stroke-width="0.05" opacity="0.2" />
                     </svg>
 
-                    <!-- Telemetry Data points -->
-                    <div class="telemetry-tag" style="top: 20%; left: 10%;">EYE_NODE_ACTIVE</div>
-                    <div class="telemetry-tag" style="bottom: 25%; right: 10%;">FACIAL_STRUC_85%</div>
-                    <div class="telemetry-tag" style="top: 50%; right: 5%;">DEPTH_MAP_1.2s</div>
+                    <!-- Dynamic Telemetry Tags -->
+                    <div class="telemetry-tag" style="top: 25%; left: 8%;" id="t-eye">NODE_EYE: ACTIVE</div>
+                    <div class="telemetry-tag" style="bottom: 25%; right: 8%;" id="t-face">STRUC_MAP: 0%</div>
+                    <div class="telemetry-tag" style="top: 50%; right: 5%;" id="t-auth">AUTH_TOKEN: ...</div>
+                    <div class="telemetry-tag" style="bottom: 40%; left: 5%;" id="t-depth">DEPTH_VAR: 0.00</div>
                 </div>
 
                 <div id="scanPlaceholder"
-                    style="color: #4285F4; font-size: 12px; text-transform: uppercase; font-weight: 500; letter-spacing: 2px; opacity: 0.7;">
+                    style="color: #4285F4; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 2px; opacity: 0.6;">
                     System Ready</div>
+
+                <!-- Enhanced Scan Laser -->
                 <div id="scanLine"
-                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, transparent, #4285F4, transparent); box-shadow: 0 0 15px #4285F4; animation: scanAnim 2.5s ease-in-out infinite; z-index: 10; opacity: 0.8;">
+                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #4285F4; box-shadow: 0 0 15px #4285F4, 0 0 30px #4285F4; animation: scanAnim 3s ease-in-out infinite; z-index: 10;">
                 </div>
             </div>
 
@@ -497,7 +629,10 @@
             document.getElementById('scanLine').style.display = 'block';
             btn.style.display = 'none';
 
-            updateStep('step-bio', 'FBBC04', 'AI Identity Mapping in progress...');
+            updateStep('step-bio', 'FBBC04', 'Establishing Secure Channel...');
+
+            // Start Dynamic Telemetry
+            startTelemetryEngine();
 
             // Capture 5 photos over 5 seconds
             await captureMultiplePhotos();
@@ -521,6 +656,30 @@
             if (icon) icon.setAttribute('fill', '#' + color);
             const textEl = step.querySelector('.step-text');
             if (textEl) textEl.innerText = text;
+        }
+
+        // Professional Telemetry Engine
+        function startTelemetryEngine() {
+            const eye = document.getElementById('t-eye');
+            const face = document.getElementById('t-face');
+            const auth = document.getElementById('t-auth');
+            const depth = document.getElementById('t-depth');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 5) + 1;
+                if (progress > 100) progress = 100;
+
+                if (eye) eye.textContent = `EYE_LOCK: ${Math.random() > 0.5 ? 'SYNC' : 'BUSY'} [${(Math.random() * 10).toFixed(1)}ms]`;
+                if (face) face.textContent = `STRUC_MAP: ${progress}% COMPLETE`;
+                if (auth) auth.textContent = `HEX_TOKEN: 0x${Math.floor(Math.random() * 16777215).toString(16).toUpperCase()}`;
+                if (depth) depth.textContent = `DEPTH_VAR: +/-${(Math.random() * 0.5).toFixed(3)}m`;
+
+                if (progress === 100) {
+                    clearInterval(interval);
+                    updateStep('step-bio', 'FBBC04', 'Identity Confirmed. Finalizing...');
+                }
+            }, 100);
         }
 
         async function startCameraInScanBox() {
