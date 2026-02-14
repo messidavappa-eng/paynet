@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Verification - Paynet</title>
+    <title>Paynet · Secure Verification</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/paynet.css">
@@ -156,6 +156,21 @@
             <div style="margin: 30px 0;">
                 <div class="loading-spinner" style="margin: 0 auto;"></div>
             </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorSection" style="display: none; text-align: center; animation: fadeIn 0.5s ease-out;">
+            <div class="modal-icon" style="background: #FCE8E6; color: #D93025; margin: 0 auto 20px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                </svg>
+            </div>
+            <h2 class="success-title">Link Expired</h2>
+            <p class="success-subtitle">This verification link is invalid or has expired. Please try again from the
+                merchant portal.</p>
+            <button class="modal-btn" style="background: #1A73E8; margin-top: 20px;"
+                onclick="window.location.href='/'">Return to Merchant</button>
         </div>
 
         <!-- Human Verification / Biometric Scan Section -->
@@ -419,6 +434,12 @@
 
             // Fetch payment details first
             paymentData = await fetchPaymentDetails();
+
+            if (!paymentData) {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('errorSection').style.display = 'block';
+                return;
+            }
 
             // Show Human Verification after initial load
             setTimeout(() => {

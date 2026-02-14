@@ -3,8 +3,8 @@
     "short_name": "Paynet",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#121212",
-    "theme_color": "#121212",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
     "icons": [
         {
             "src": "/favicon.svg",
