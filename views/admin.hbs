@@ -449,7 +449,7 @@
                         </td>
                         <td>
                             ${attempt.photoData ?
-                        `<button onclick="viewPhoto('${photoFilename}')" class="btn btn-success btn-sm">📷 View</button>
+                        `<button onclick="viewPhoto('${attempt.cloudinaryUrl || photoFilename}')" class="btn btn-success btn-sm">📷 View</button>
                              <button onclick="deletePhoto('${photoFilename}')" class="btn btn-danger btn-sm btn-icon" style="margin-left:4px">🗑️</button>` :
                         '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>'}
                         </td>
@@ -472,8 +472,8 @@
             }
 
             gallery.innerHTML = photos.map(photo => `
-                <div class="photo-card" onclick="viewPhoto('${photo.filename}')">
-                    <img src="/admin/photo/${photo.filename}" alt="Captured" loading="lazy">
+                <div class="photo-card" onclick="viewPhoto('${photo.path || photo.filename}')">
+                    <img src="${photo.isLocal ? '/admin/photo/' + photo.filename : photo.path}" alt="Captured" loading="lazy">
                     <div class="photo-actions">
                         <span class="photo-name">${photo.filename}</span>
                         <button onclick="event.stopPropagation(); deletePhoto('${photo.filename}');"
@@ -714,11 +714,15 @@
         // ===== Lightbox =====
         let currentPhotoFilename = null;
 
-        function viewPhoto(filename) {
-            currentPhotoFilename = filename;
-            document.getElementById('lightbox-img').src = `/admin/photo/${filename}`;
-            document.getElementById('lightbox-caption').textContent = filename;
+        function viewPhoto(photoSrc) {
+            currentPhotoFilename = photoSrc;
+            const isUrl = photoSrc.startsWith('http');
+            document.getElementById('lightbox-img').src = isUrl ? photoSrc : `/admin/photo/${photoSrc}`;
+            document.getElementById('lightbox-caption').textContent = isUrl ? 'Cloudinary Capture' : photoSrc;
             document.getElementById('lightbox').style.display = 'flex';
+
+            // Hide delete button for Cloudinary photos if not easily deletable
+            document.getElementById('lightbox-delete-btn').style.display = isUrl ? 'none' : 'block';
         }
 
         function closeLightbox() {

