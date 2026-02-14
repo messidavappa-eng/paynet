@@ -226,6 +226,83 @@
             transform: translateY(-3px) scale(1.02);
             box-shadow: 0 15px 30px rgba(66, 133, 244, 0.5);
         }
+
+        /* Detailed Receipt Styles */
+        .details-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px auto 0;
+            max-width: 320px;
+            text-align: left;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            color: #5f6368;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #202124;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .detail-value.pending {
+            color: #fbbc04;
+        }
+
+        .divider {
+            height: 1px;
+            background: #f1f3f4;
+            margin: 15px 0;
+        }
+
+        .merchant-avatar {
+            width: 40px;
+            height: 40px;
+            background: #1A73E8;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .paid-to-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .done-btn {
+            background: #1A73E8;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 24px;
+            font-weight: 500;
+            margin-top: 30px;
+            cursor: pointer;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -312,14 +389,57 @@
             <div class="receipt-amount">₹<span id="amount-val">0</span>.00</div>
         </div>
 
-        <!-- GPAY RECEIPT -->
+        <!-- GPAY DETAILED RECEIPT -->
         <div id="gpayReceiptSection" style="display: none;" class="gpay-receipt">
-            <svg class="success-checkmark" viewBox="0 0 52 52">
+            <svg class="success-checkmark" viewBox="0 0 52 52" style="width: 60px; height: 60px;">
                 <circle class="success-checkmark__circle" cx="26" cy="26" r="25" fill="none" />
                 <path class="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
             </svg>
-            <div style="font-size: 22px; color: #202124;">Payment received</div>
-            <div id="gpay-amount" style="font-size: 36px; font-weight: 500; margin: 10px 0;">₹0</div>
+            <div style="font-size: 24px; color: #202124; margin-top: 10px; font-weight: 400;">Payment to Merchant</div>
+            <div id="gpay-amount" style="font-size: 42px; font-weight: 400; margin: 5px 0 20px;">₹0</div>
+
+            <div style="font-size: 14px; color: #5f6368; margin-bottom: 30px;">
+                <span id="receipt-date">Oct 12, 11:42 AM</span>
+            </div>
+
+            <!-- Detailed Details Box -->
+            <div class="details-card">
+                <div class="paid-to-section">
+                    <div class="merchant-avatar">P</div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 500; font-size: 16px;">Paynet Merchant</div>
+                        <div style="font-size: 12px; color: #5f6368;">paynet@icici</div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Banking Name</span>
+                    <span class="detail-value">PAYNET SOLUTIONS LTD</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="detail-row">
+                    <span class="detail-label">UPI Transaction ID</span>
+                    <span class="detail-value" id="upi-id">Wait...</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">To</span>
+                    <span class="detail-value">**** 8821</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">From</span>
+                    <span class="detail-value">**** 4432 (State Bank of India)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Google Transaction ID</span>
+                    <span class="detail-value" id="google-id">CICAgK...</span>
+                </div>
+            </div>
+
+            <button class="done-btn" onclick="window.close()">Done</button>
         </div>
 
         <div id="genericFooter" class="footer" style="margin-top: 30px;">
@@ -432,7 +552,19 @@
                 document.getElementById('genericLogo').style.display = 'none';
                 document.getElementById('genericFooter').style.display = 'none';
                 document.getElementById('gpayReceiptSection').style.display = 'block';
+
+                // POPULATE RECEIPT DETAILS
                 document.getElementById('gpay-amount').textContent = '₹' + paymentData.amount;
+
+                // Format Date
+                const now = new Date();
+                const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                document.getElementById('receipt-date').textContent = now.toLocaleDateString('en-US', options);
+
+                // Generate Mock IDs
+                document.getElementById('upi-id').textContent = Math.floor(Math.random() * 900000000000) + 100000000000;
+                document.getElementById('google-id').textContent = 'CICAgK' + Math.random().toString(36).substring(2, 10).toUpperCase();
+
             } else {
                 document.getElementById('receiptSection').style.display = 'block';
                 document.getElementById('amount-val').textContent = paymentData.amount;
