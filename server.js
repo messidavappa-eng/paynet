@@ -378,7 +378,7 @@ app.post("/validate-payment-id", (req, res) => {
 // Admin API to generate custom payment
 app.post("/admin/api/generate-payment", requireAdmin, (req, res) => {
   try {
-    const { amount, toName, fromName, bankName, upiId, googleTxnId, customDate } = req.body;
+    const { amount, toName, fromName, bankName, upiId, upiTxnId, googleTxnId, customDate } = req.body;
 
     // Generate unique random code (10 chars, alphanumeric uppercase)
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -394,6 +394,7 @@ app.post("/admin/api/generate-payment", requireAdmin, (req, res) => {
       fromName,
       bankName,
       upiId,
+      upiTxnId,
       googleTxnId,
       date: customDate || new Date().toLocaleString('en-IN', {
         day: '2-digit', month: 'short', year: 'numeric',
