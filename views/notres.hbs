@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Restricted • Paynet</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Background CSS -->
+    <link rel="stylesheet" href="/background.css">
+</head>
+
+<body>
+
+    <!-- Global Background -->
+    <div class="global-bg"></div>
+
+    <div class="container" style="text-align: center; padding: 40px 20px;">
+
+        <h1 class="brand" style="font-size: 32px; margin-bottom: 20px;">🚫</h1>
+
+        <div style="font-size: 80px; margin-bottom: 20px;">⛔</div>
+
+        <h2 style="color: #ff4444; font-size: 24px; margin-bottom: 15px;">
+            ACCESS RESTRICTED
+        </h2>
+
+        <p style="color: #eee; font-size: 18px; line-height: 1.6; margin-bottom: 15px;">
+            Too many failed attempts! 🛑
+        </p>
+
+        <p style="color: #b0b0b0; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+            നിങ്ങൾ വളരെയധികം തവണ തെറ്റായ പാസ്‌വേഡ് നൽകി. <br>
+            (You have entered wrong password too many times.)
+        </p>
+
+        <p style="color: #888; font-size: 14px; margin-bottom: 30px; font-style: italic;">
+            Maybe it's time to give up? 😅
+        </p>
+
+        <div style="margin-top: 40px;">
+            <a href="/" class="btn-login"
+                style="display: inline-block; text-decoration: none; background: #2563eb; box-shadow: none; margin-right: 10px;">
+                Try Again Anyway
+            </a>
+
+            <a href="/forgot-password" class="btn-login"
+                style="display: inline-block; text-decoration: none; background: #333; box-shadow: none;">
+                Forgot Password?
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        // Check if user came from login attempt or just refreshed
+        // If they refresh this page, redirect back to login
+        const cameFromLogin = sessionStorage.getItem('cameFromLogin');
+
+        if (!cameFromLogin) {
+            // User refreshed the page or accessed directly
+            window.location.href = '/';
+        } else {
+            // User came from login attempt, allow them to view the page
+            // Clear the flag so next refresh will redirect
+            sessionStorage.removeItem('cameFromLogin');
+        }
+    </script>
+
+</body>
+
+</html>

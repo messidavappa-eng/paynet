@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+
+# Misc
+.DS_Store
+.env
+.git-credentials
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Local data / Uploads
+captures/
+admin-captures/
+loginAttempts.json
+generatedPayments.json
+paymentIds.json
+push_error.txt
+push_error_new.txt
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

@@ -1,0 +1,397 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Poppins", sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: #000;
+}
+
+/* Gradient BG */
+.bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at top, rgba(42, 0, 61, 0.9), transparent 60%),
+        radial-gradient(circle at bottom, rgba(0, 17, 61, 0.9), transparent 60%);
+    filter: blur(100px);
+    opacity: 0.8;
+    z-index: -1;
+}
+
+/* Card */
+.container {
+    width: 360px;
+    padding: 36px 30px;
+    background: #0f0f0f;
+    border-radius: 20px;
+    border: 1px solid #262626;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+    max-width: 90%;
+
+    /* Smooth Transition */
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+    /* Start hidden */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Instagram PNG logo */
+.insta-logo {
+    width: 55px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+    filter: drop-shadow(0 4px 15px rgba(255, 0, 120, 0.4));
+}
+
+/* Titles */
+.brand {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    /* Revert to white */
+    margin-bottom: 4px;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    animation: none;
+}
+
+@keyframes text-gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Disclaimer Banner - Footer Style */
+.disclaimer-banner {
+    background: transparent;
+    border: none;
+    border-top: 1px solid #262626;
+    padding: 12px 0 0 0;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.disclaimer-banner h2 {
+    display: none;
+    /* Hide heading in footer */
+}
+
+.disclaimer-banner p {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.3;
+    color: #999;
+}
+
+.disclaimer-banner a {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 10px;
+}
+
+.disclaimer-banner a:hover {
+    text-decoration: underline;
+}
+
+.sub {
+    font-size: 14px;
+    color: #b0b0b0;
+    margin-bottom: 24px;
+}
+
+/* Error */
+.error {
+    color: #ff3b7f;
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    border: 1px solid #303030;
+    background: #181818;
+    color: #eee;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #655bff;
+}
+
+input::placeholder {
+    color: #666;
+}
+
+/* Login button */
+.btn-login {
+    width: 100%;
+    padding: 14px;
+
+    /* Gradient Animation (Blue -> Purple) */
+    background: linear-gradient(90deg, #2563eb, #7c3aed, #db2777, #2563eb);
+    background-size: 300% 100%;
+    animation: text-gradient 6s ease-in-out infinite alternate;
+
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: 0.2s;
+    box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+    /* Purple glow */
+    margin-bottom: 14px;
+}
+
+.btn-login:hover {
+    transform: scale(1.01);
+    opacity: 0.9;
+}
+
+/* Forgot (Moved from below "Create Account" button to below "Log In" button) */
+.forgot {
+    display: block;
+    margin-top: 0px;
+    /* Reset top margin */
+    margin-bottom: 24px;
+    /* Space below the link before the create button */
+    font-size: 13px;
+    color: #888;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot:hover {
+    color: #c7c3ff;
+}
+
+/* Create account */
+.btn-create {
+    width: 100%;
+    padding: 14px;
+    margin-top: 0;
+    /* Adjusted: Spacing handled by .forgot margin */
+    border-radius: 14px;
+    border: 1px solid #2563eb;
+    background: transparent;
+    color: #93c5fd;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-create:hover {
+    background: rgba(100, 90, 255, 0.15);
+}
+
+
+/* Meta Footer Section */
+.meta-footer {
+    margin-top: 40px;
+    /* Increased margin for separation */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
+    /* Reduced gap between logo and 'from Meta' text */
+    opacity: 1;
+}
+
+/* Styling for the local PNG image */
+.meta-footer .meta-logo-img {
+    width: 65px;
+    height: auto;
+    margin-bottom: -5px;
+    /* Pulls the 'from Meta' text slightly closer to the logo */
+}
+
+.meta-footer p {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* Forgot Password Page Specifics */
+.lock-icon-wrapper {
+    width: 90px;
+    height: 90px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px auto;
+}
+
+.lock-icon-wrapper i {
+    font-size: 45px;
+    color: #fff;
+}
+
+.or-divider {
+    display: flex;
+    align-items: center;
+    color: #888;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 20px 0;
+    width: 100%;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #333;
+}
+
+.or-divider::before {
+    margin-right: 15px;
+}
+
+.or-divider::after {
+    margin-left: 15px;
+}
+
+.create-new-account-link {
+    display: block;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 40px;
+    transition: 0.2s;
+}
+
+.create-new-account-link:hover {
+    color: #c7c3ff;
+}
+
+.back-to-login-wrapper {
+    border-top: 1px solid #262626;
+    background-color: #0f0f0f;
+    /* Match container bg */
+    width: calc(100% + 60px);
+    /* Extend to edges (container padding is 30px) */
+    margin-left: -30px;
+    margin-bottom: -36px;
+    /* Counteract container bottom padding */
+    padding: 15px 0;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.back-to-login-link {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+/* Splash Screen Specifics */
+.splash-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.splash-profile-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.splash-profile-pic {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    border: 2px solid #e1306c;
+    /* Instagram Pink Border */
+    padding: 3px;
+    /* Gap between border and image */
+    background-color: #000;
+}
+
+.splash-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #ff3040;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #000;
+}
+
+.splash-username {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.splash-text {
+    font-size: 13px;
+    color: #a0a0a0;
+    margin-bottom: 25px;
+}
+
+.splash-btn {
+    margin-top: 10px;
+    background: linear-gradient(90deg, #ec4899, #8b5cf6);
+    /* Slightly distinct gradient */
+    border: none;
+}
+
+/* Ensure Login Container Transitions Smoothly */
+#login-container {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}

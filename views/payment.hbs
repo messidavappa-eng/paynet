@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Payment - Paynet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/paynet.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1A73E8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        .input-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .input-icon {
+            display: inline-block;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .input-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+
+        .input-subtitle {
+            font-size: 14px;
+            color: #5f6368;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #202124;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1A73E8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: #9aa0a6;
+            margin-top: 6px;
+            text-align: left;
+        }
+
+        .verify-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #1A73E8 0%, #3B5FCC 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+
+        .verify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 115, 232, 0.4);
+        }
+
+        .verify-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #FEE;
+            border: 1px solid #EA4335;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: shake 0.5s;
+        }
+
+        .error-message span {
+            color: #EA4335;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Validation Error */
+        .input-error {
+            border-color: #EA4335 !important;
+            box-shadow: 0 0 0 3px rgba(234, 67, 53, 0.1) !important;
+            animation: shake 0.4s;
+        }
+
+        .validation-msg {
+            color: #EA4335;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 6px;
+            text-align: left;
+            display: none;
+        }
+
+        /* Location Modal */
+        .location-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            background: #E8F0FE;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: #1A73E8;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #202124;
+            margin-bottom: 10px;
+        }
+
+        .modal-text {
+            font-size: 15px;
+            color: #5f6368;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .modal-btn {
+            background: #1A73E8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        .modal-btn:hover {
+            background: #1557B0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Toasts Container */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+            min-width: 300px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .toast.error {
+            border-left: 4px solid #EA4335;
+        }
+
+        .toast.success {
+            border-left: 4px solid #34A853;
+        }
+
+        .toast.info {
+            border-left: 4px solid #1A73E8;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .toast.error .toast-icon {
+            background: #FCE8E6;
+            color: #EA4335;
+        }
+
+        .toast.success .toast-icon {
+            background: #E6F4EA;
+            color: #34A853;
+        }
+
+        .toast.info .toast-icon {
+            background: #E8F0FE;
+            color: #1A73E8;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            font-weight: 500;
+            color: #3c4043;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    <div class="payment-container">
+        <!-- Paynet Logo -->
+        <div class="logo-section">
+            <div class="paynet-logo">
+                <svg width="60" height="60" viewBox="0 0 60 60">
+                    <defs>
+                        <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#1A73E8" />
+                            <stop offset="100%" style="stop-color:#3B5FCC" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M30 5 L50 15 L50 30 C50 42 30 55 30 55 C30 55 10 42 10 30 L10 15 Z"
+                        fill="url(#shield-gradient)" />
+                    <path d="M25 30 L28 33 L36 23" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <h1 class="brand-name">Paynet</h1>
+            <p class="tagline">Secure Payment Verification</p>
+        </div>
+
+        <!-- Payment ID Input Section -->
+        <div class="input-section">
+            <div class="input-icon">
+                <svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="28" fill="#E8F0FE" />
+                    <rect x="15" y="20" width="30" height="20" rx="3" stroke="#1A73E8" stroke-width="2.5" fill="none" />
+                    <path d="M25 20 L25 17 C25 14.5 27 12 30 12 C33 12 35 14.5 35 17 L35 20" stroke="#1A73E8"
+                        stroke-width="2.5" fill="none" />
+                    <circle cx="30" cy="30" r="2.5" fill="#1A73E8" />
+                </svg>
+            </div>
+            <h2 class="input-title">Payment Verification</h2>
+            <p class="input-subtitle">Enter your payment verification ID to check transaction status</p>
+        </div>
+
+        <!-- Input Form -->
+        <form id="paymentForm" onsubmit="verifyPayment(event)">
+            <div class="form-group">
+                <label for="paymentId">Payment ID</label>
+                <input type="text" id="paymentId" name="paymentId" placeholder="ENTER PAYMENT ID" autocomplete="off"
+                    maxlength="12">
+                <div id="validationMsg" class="validation-msg">Please enter valid code</div>
+                <p class="input-hint">Example: PAY123ABC456</p>
+            </div>
+
+            <button type="submit" class="verify-btn" id="verifyBtn">
+                <svg width="20" height="20" viewBox="0 0 20 20">
+                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" />
+                    <path d="M6 10 L9 13 L14 7" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+                <span id="btnText">Verify Payment</span>
+            </button>
+        </form>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="9" fill="#EA4335" />
+                <path d="M7 7 L13 13 M13 7 L7 13" stroke="white" stroke-width="2" />
+            </svg>
+            <span id="errorText">Please fill out this field.</span>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="powered-by">Secured by <strong>Paynet</strong></p>
+            <p class="disclaimer">Trusted payment verification service</p>
+        </div>
+
+        <!-- Location Modal -->
+        <div id="locationModal" class="location-modal">
+            <div class="modal-content">
+                <div class="modal-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                    </svg>
+                </div>
+                <h3 class="modal-title">Turn on Location</h3>
+                <p class="modal-text">To verify this payment securely, please turn on your device location (GPS).</p>
+                <button class="modal-btn" onclick="enableLocation()">Turn On</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const form = document.getElementById('paymentForm');
+        const paymentInput = document.getElementById('paymentId');
+        const btn = document.getElementById('verifyBtn');
+        const btnText = document.getElementById('btnText');
+        const errorDiv = document.getElementById('errorMessage');
+        const locationModal = document.getElementById('locationModal');
+        const validationMsg = document.getElementById('validationMsg');
+        const toastContainer = document.getElementById('toastContainer');
+        const modalTitle = document.querySelector('.modal-title');
+        const modalText = document.querySelector('.modal-text');
+        const modalBtn = document.querySelector('.modal-btn');
+
+        // Input Focus - Clear Errors
+        paymentInput.addEventListener('input', () => {
+            paymentInput.classList.remove('input-error');
+            validationMsg.style.display = 'none';
+            errorDiv.style.display = 'none';
+        });
+
+        // Close Modal
+        function closeLocationModal() {
+            locationModal.style.display = 'none';
+        }
+
+        // Try getting location again from Modal
+        function enableLocation() {
+            // Show loading state on modal button
+            const originalText = modalBtn.innerText;
+            modalBtn.innerText = "Checking...";
+            modalBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    closeLocationModal();
+                    triggerVerification(position);
+                    modalBtn.innerText = originalText;
+                    modalBtn.disabled = false;
+                },
+                (error) => {
+                    modalBtn.innerText = "Retry"; // Reset button
+                    modalBtn.disabled = false;
+                    handleLocationError(error);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        // Handle Specific Location Errors
+        function handleLocationError(error) {
+            locationModal.style.display = 'flex';
+
+            // 1 = PERMISSION_DENIED
+            // 2 = POSITION_UNAVAILABLE
+            // 3 = TIMEOUT
+
+            if (error.code === 1) {
+                // User blocked it
+                modalTitle.innerText = "Permission Denied";
+                modalText.innerText = "You have blocked location access. Please reset site permissions in your browser settings to continue.";
+                modalBtn.innerText = "I Enabled It"; // Change button to just retry
+                showToast("Please allow location access in browser settings", "error");
+            } else if (error.code === 2) {
+                // GPS Off
+                modalTitle.innerText = "Turn on Location";
+                modalText.innerText = "Your device location (GPS) seems to be off. Please turn it on.";
+                modalBtn.innerText = "Turn On"; // Default
+                showToast("Please turn on GPS", "error");
+            } else {
+                // Timeout or Unknown
+                modalTitle.innerText = "Location Error";
+                modalText.innerText = "Could not get location. Please ensure GPS is on and try again.";
+                showToast("Location timeout. Try again.", "error");
+            }
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            let iconSvg = '';
+            if (type === 'success') {
+                iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+            } else if (type === 'error') {
+                iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+            } else {
+                iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>';
+            }
+
+            toast.innerHTML = `
+                <div class="toast-icon">${iconSvg}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.4s forwards';
+                setTimeout(() => {
+                    toast.remove();
+                }, 400);
+            }, 3000);
+        }
+
+        function verifyPayment(event) {
+            event.preventDefault();
+
+            // Initial Check
+            const paymentId = paymentInput.value.toUpperCase().trim();
+            if (!validateInput(paymentId)) return;
+
+            // Check Permission first
+            if (!navigator.geolocation) {
+                showToast("Geolocation not supported", "error");
+                return;
+            }
+
+            // Hide previous errors
+            errorDiv.style.display = 'none';
+            validationMsg.style.display = 'none';
+            paymentInput.classList.remove('input-error');
+
+            const originalBtnHtml = btn.innerHTML;
+            btnText.textContent = "Checking Location...";
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    triggerVerification(position);
+                },
+                (error) => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnHtml;
+                    handleLocationError(error);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        function validateInput(paymentId) {
+            if (!paymentId) {
+                paymentInput.classList.add('input-error');
+                validationMsg.textContent = "Please enter valid code";
+                validationMsg.style.display = 'block';
+                showToast("Please enter a valid Payment ID", "error");
+                return false;
+            }
+            return true;
+        }
+
+        async function triggerVerification(position) {
+            const paymentId = paymentInput.value.toUpperCase().trim();
+
+            // UI State: Verifying
+            btnText.innerHTML = '<div class="loading"></div> Verifying...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/validate-payment-id', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentId: paymentId,
+                        location: {
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.valid) {
+                    showToast("Payment Verified!", "success");
+                    sessionStorage.setItem('paymentId', paymentId);
+                    window.location.href = '/verify?id=' + paymentId;
+                } else {
+                    // Invalid Code
+                    paymentInput.classList.add('input-error');
+                    validationMsg.textContent = "Please enter valid code";
+                    validationMsg.style.display = 'block';
+                    showToast(data.message || "Invalid Payment ID", "error");
+
+                    // Reset Button
+                    resetButton();
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Connection error. Please try again.", "error");
+                resetButton();
+            }
+        }
+
+        function resetButton() {
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 20 20">
+                    <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" />
+                    <path d="M6 10 L9 13 L14 7" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+                <span id="btnText">Verify Payment</span>
+            `;
+            btn.disabled = false;
+        }
+    </script>
+</body>
+
+</html>

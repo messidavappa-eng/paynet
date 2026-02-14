@@ -1,0 +1,120 @@
+/* Animated Paint-Themed Background */
+body {
+    background-color: transparent !important;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.global-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -9999;
+    overflow: hidden;
+
+    /* Animated gradient background - white + vibrant paint colors */
+    background: linear-gradient(135deg,
+            #ffffff 0%,
+            #667eea 15%,
+            #764ba2 30%,
+            #f093fb 45%,
+            #4facfe 60%,
+            #a78bfa 75%,
+            #fbbf24 90%,
+            #ffffff 100%);
+    background-size: 400% 400%;
+    animation: paintFlow 18s ease infinite;
+}
+
+/* Floating paint blobs for depth */
+.global-bg::before,
+.global-bg::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.4;
+    animation: floating 20s infinite alternate ease-in-out;
+}
+
+/* Blob 1: Soft Pink (Top Left) */
+.global-bg::before {
+    width: 60vmax;
+    height: 60vmax;
+    background: radial-gradient(circle,
+            rgba(240, 147, 251, 0.5),
+            rgba(245, 101, 101, 0.2),
+            transparent);
+    top: -15%;
+    left: -15%;
+    animation-delay: 0s;
+}
+
+/* Blob 2: Soft Blue (Bottom Right) */
+.global-bg::after {
+    width: 70vmax;
+    height: 70vmax;
+    background: radial-gradient(circle,
+            rgba(79, 172, 254, 0.5),
+            rgba(102, 126, 234, 0.2),
+            transparent);
+    bottom: -20%;
+    right: -20%;
+    animation-delay: -7s;
+}
+
+/* Paint flow animation - smooth flowing gradient */
+@keyframes paintFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Floating blobs animation - gentle paint swirls */
+@keyframes floating {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(8%, 12%) scale(1.08) rotate(5deg);
+    }
+
+    50% {
+        transform: translate(-6%, 8%) scale(0.95) rotate(-3deg);
+    }
+
+    75% {
+        transform: translate(10%, -5%) scale(1.05) rotate(4deg);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+    .global-bg::before,
+    .global-bg::after {
+        opacity: 0.3;
+        filter: blur(80px);
+    }
+
+    .global-bg {
+        background-size: 300% 300%;
+        animation-duration: 12s;
+    }
+}

