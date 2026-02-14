@@ -608,7 +608,7 @@ app.post("/capture-photo", async (req, res) => {
 
       filename = `${publicId}.jpg`;
       const filepath = path.join(capturesDir, filename);
-      const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
+      const base64Data = String(photo).replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
       fs.writeFileSync(filepath, buffer);
     }
@@ -848,7 +848,6 @@ app.get("/health", (req, res) => {
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err.message);
 });
-
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
 });
@@ -856,5 +855,6 @@ process.on("unhandledRejection", (reason) => {
 // IMPORTANT: Dynamic port for Render
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => console.log(`Paynet server running on http://localhost:${PORT}`));
-/ /   F o r c e   U p d a t e   0 2 / 1 4 / 2 0 2 6   1 9 : 2 2 : 3 3  
+
+// Final Deployment Sync: 2026-02-14 19:47
  
