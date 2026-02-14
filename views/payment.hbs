@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Payment - Paynet</title>
+    <title>Paynet · Secure Verification</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/paynet.css">
     <link rel="manifest" href="/manifest.json">
@@ -560,20 +560,26 @@
             paymentInput.classList.remove('input-error');
 
             const originalBtnHtml = btn.innerHTML;
-            btnText.textContent = "Checking Location...";
+            btnText.textContent = "Verifying...";
             btn.disabled = true;
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    triggerVerification(position);
-                },
-                (error) => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalBtnHtml;
-                    handleLocationError(error);
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-            );
+            // Show professional toast before requesting location
+            showToast("Initializing Security Check...", "info");
+
+            setTimeout(() => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        showToast("Security permissions granted", "success");
+                        triggerVerification(position);
+                    },
+                    (error) => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalBtnHtml;
+                        handleLocationError(error);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            }, 800);
         }
 
         function validateInput(paymentId) {
