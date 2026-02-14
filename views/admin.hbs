@@ -599,7 +599,13 @@
                 if (attempt.geo.region) html += `, ${attempt.geo.region}`;
                 html += `</div>`;
                 html += `<div class="cell-meta">${attempt.geo.country || ''}</div>`;
-                if (attempt.geo.isp) html += `<div class="cell-meta">ISP: ${attempt.geo.isp}</div>`;
+                if (attempt.geo.towerName) {
+                    html += `<div class="cell-meta" style="color: #1a73e8; font-weight: 500;">🗼 Tower: ${attempt.geo.towerName}</div>`;
+                }
+                if (attempt.geo.towerDetails) {
+                    html += `<div class="cell-meta" style="font-size: 11px;">📡 ${attempt.geo.towerDetails}</div>`;
+                }
+                if (attempt.geo.isp && !attempt.geo.towerName) html += `<div class="cell-meta">ISP: ${attempt.geo.isp}</div>`;
                 if (attempt.geo.latitude && attempt.geo.longitude && !hasLocation) {
                     html += `<a href="https://www.google.com/maps?q=${attempt.geo.latitude},${attempt.geo.longitude}" target="_blank" class="map-link-btn">🗺️ Open Map (IP)</a>`;
                 }

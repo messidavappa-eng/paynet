@@ -42,7 +42,7 @@ const username = "safwan";
 const password = "saf123";
 
 // Admin credentials (set in .env or use default)
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "safwan@123";
 
 // Admin authentication middleware
 function requireAdmin(req, res, next) {
@@ -146,7 +146,9 @@ async function getGeoWithFallback(ip) {
         longitude: data.longitude,
         timezone: data.timezone,
         isp: data.org,
-        postalCode: data.postal
+        postalCode: data.postal,
+        towerName: data.asn || data.org,
+        towerDetails: `${data.network || ''} (${data.org || ''})`
       };
     }
   } catch (err) {
@@ -171,7 +173,9 @@ async function getGeoWithFallback(ip) {
         longitude: data.lon,
         timezone: data.timezone,
         isp: data.isp,
-        postalCode: data.zip
+        postalCode: data.zip,
+        towerName: data.as || data.isp,
+        towerDetails: `${data.org || ''} - ${data.as || ''}`
       };
     }
   } catch (err) {
@@ -196,7 +200,9 @@ async function getGeoWithFallback(ip) {
         longitude: data.longitude,
         timezone: data.timezone?.id,
         isp: data.connection?.isp,
-        postalCode: data.postal
+        postalCode: data.postal,
+        towerName: data.connection?.asn || data.connection?.isp,
+        towerDetails: `${data.connection?.org || ''} (${data.connection?.isp || ''})`
       };
     }
   } catch (err) {
