@@ -1,3 +1,5 @@
+// Paynet - Payment Verification System
+// Full Deployment Sync: 2026-02-14 19:20
 const express = require("express");
 const app = express();
 const hbs = require("hbs");
