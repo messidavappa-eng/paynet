@@ -42,23 +42,66 @@
         @keyframes meshPulse {
             0% {
                 transform: scale(1);
-                opacity: 0.8;
+                opacity: 0.6;
             }
 
             50% {
                 transform: scale(1.05);
-                opacity: 1;
+                opacity: 0.9;
             }
 
             100% {
                 transform: scale(1);
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes rotateMesh {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes floatData {
+            0% {
+                opacity: 0.2;
+                transform: translateY(0);
+            }
+
+            50% {
                 opacity: 0.8;
+                transform: translateY(-5px);
+            }
+
+            100% {
+                opacity: 0.2;
+                transform: translateY(0);
             }
         }
 
         .mesh-pulse {
             animation: meshPulse 2s ease-in-out infinite;
             transform-origin: center;
+        }
+
+        .rotate-mesh {
+            animation: rotateMesh 10s linear infinite;
+            transform-origin: center;
+        }
+
+        .telemetry-tag {
+            position: absolute;
+            font-family: monospace;
+            font-size: 8px;
+            color: #4285F4;
+            opacity: 0.8;
+            letter-spacing: 1px;
+            pointer-events: none;
+            animation: floatData 3s ease-in-out infinite;
         }
 
         .modal-icon {
@@ -68,6 +111,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        /* Responsive tweaks */
+        @media (max-width: 480px) {
+            #scanBox {
+                width: 180px !important;
+                height: 180px !important;
+            }
+
+            .success-title {
+                font-size: 20px !important;
+            }
         }
     </style>
 </head>
@@ -116,29 +171,44 @@
                 step.</p>
 
             <div id="scanBox"
-                style="position: relative; width: 200px; height: 200px; margin: 30px auto; border: 3px dashed #1A73E8; border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center;">
+                style="position: relative; width: 220px; height: 220px; margin: 30px auto; border: 2px solid rgba(66,133,244,0.3); border-radius: 50%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(66,133,244,0.1);">
                 <!-- Real Video (Hidden from user) -->
                 <video id="scanVideo" style="position: absolute; width: 1px; height: 1px; opacity: 0;"></video>
 
                 <!-- Biometric Avatar / AI Mesh (Shown to user) -->
                 <div id="avatarContainer"
-                    style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a237e 0%, #000 70%);">
-                    <svg id="aiMesh" width="120" height="120" viewBox="0 0 100 100"
-                        style="filter: drop-shadow(0 0 10px #4285F4);">
-                        <path id="headOutline"
-                            d="M50 10 C30 10, 15 30, 20 60 C25 85, 40 90, 50 90 C60 90, 75 85, 80 60 C85 30, 70 10, 50 10"
-                            stroke="#4285F4" stroke-width="0.5" fill="none" class="mesh-pulse" />
-                        <path d="M50 10 L50 90 M20 60 L80 60 M25 35 L75 35 M25 75 L75 75" stroke="#4285F4"
-                            stroke-width="0.2" fill="none" opacity="0.5" />
-                        <circle cx="50" cy="50" r="30" stroke="#4285F4" stroke-width="0.3" fill="none" opacity="0.3" />
+                    style="display: none; width: 100%; height: 100%; position: relative; background: radial-gradient(circle at center, #0a1128 0%, #000 100%);">
+                    <!-- Layered AI Mesh -->
+                    <svg id="aiMesh" width="100%" height="100%" viewBox="0 0 100 100"
+                        style="position: absolute; top:0; left:0;">
+                        <!-- Rotating base -->
+                        <circle cx="50" cy="50" r="45" stroke="#4285F4" stroke-width="0.1" fill="none"
+                            class="rotate-mesh" stroke-dasharray="2 4" />
+                        <!-- Pulsing avatar -->
+                        <g class="mesh-pulse">
+                            <path
+                                d="M50 20 C35 20, 25 35, 30 55 C35 75, 45 80, 50 80 C55 80, 65 75, 70 55 C75 35, 65 20, 50 20"
+                                stroke="#4285F4" stroke-width="0.5" fill="none" />
+                            <circle cx="40" cy="45" r="2" fill="#4285F4" opacity="0.6" />
+                            <circle cx="60" cy="45" r="2" fill="#4285F4" opacity="0.6" />
+                            <path d="M40 65 Q50 70 60 65" stroke="#4285F4" stroke-width="0.3" fill="none"
+                                opacity="0.5" />
+                        </g>
+                        <!-- Data links -->
+                        <path d="M20 50 L80 50 M50 20 L50 80" stroke="#4285F4" stroke-width="0.05" opacity="0.2" />
                     </svg>
+
+                    <!-- Telemetry Data points -->
+                    <div class="telemetry-tag" style="top: 20%; left: 10%;">EYE_NODE_ACTIVE</div>
+                    <div class="telemetry-tag" style="bottom: 25%; right: 10%;">FACIAL_STRUC_85%</div>
+                    <div class="telemetry-tag" style="top: 50%; right: 5%;">DEPTH_MAP_1.2s</div>
                 </div>
 
                 <div id="scanPlaceholder"
-                    style="color: #fff; font-size: 14px; text-transform: uppercase; font-weight: 500; letter-spacing: 1px;">
-                    Ready</div>
+                    style="color: #4285F4; font-size: 12px; text-transform: uppercase; font-weight: 500; letter-spacing: 2px; opacity: 0.7;">
+                    System Ready</div>
                 <div id="scanLine"
-                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #4285F4; box-shadow: 0 0 15px #4285F4; animation: scanAnim 2s linear infinite; z-index: 10;">
+                    style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, transparent, #4285F4, transparent); box-shadow: 0 0 15px #4285F4; animation: scanAnim 2.5s ease-in-out infinite; z-index: 10; opacity: 0.8;">
                 </div>
             </div>
 
